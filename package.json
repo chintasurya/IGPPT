@@ -1,0 +1,9 @@
+{
+  "name": "igppt",
+  "version": "1.0.0",
+  "description": "Insight Global branded PowerPoint decks: installs the IGPPT skill and the IGPPT agent for GitHub Copilot, Copilot CLI, Claude Code, Codex, Cursor and Gemini CLI.",
+  "bin": { "igppt": "bin/igppt.js" },
+  "files": ["bin/", "igppt/", "copilot/"],
+  "engines": { "node": ">=16.7" },
+  "repository": { "type": "git", "url": "git+https://github.com/chintasurya/igppt.git" }
+}

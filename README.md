@@ -26,7 +26,19 @@ It follows the open Agent Skills format (a folder with `SKILL.md`), so the same 
 | `chatgpt/GPT-instructions.md` | Set-up and instructions for a ChatGPT custom GPT |
 | `chatgpt/igppt-skill.zip` | The skill packed for upload to a custom GPT |
 
-## Install (one command, any AI tool)
+## Install: one command
+
+Run this in a terminal (or in Copilot CLI after `!`) inside the project where you want IGPPT:
+
+```bash
+npx github:chintasurya/igppt
+```
+
+It installs the IGPPT skill for GitHub Copilot, Copilot CLI, Claude Code, Codex, Cursor and Gemini CLI, creates the **IGPPT agent** (`.github/agents/igppt.agent.md`), writes the "always use IGPPT for presentations" rule, adds a `/igppt` command, and runs a self-test that ends with "Ready.". Add `--global` to install for your user across all projects. Run the same command again to update.
+
+Needs Node.js 16.7+, git and Python 3.9+.
+
+## Install with the skills CLI (alternative)
 
 Run this in a terminal inside the project where you want the skill. It needs Node.js (for `npx`), git, and Python 3.9+ for building decks. No GitHub login is needed.
 
