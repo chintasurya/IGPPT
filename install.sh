@@ -16,20 +16,16 @@ else
   [ -d "$TARGET" ] || { echo "Not a folder: $TARGET"; exit 1; }
   copy_skill "$TARGET/.github/skills"
   copy_skill "$TARGET/.claude/skills"
-  # standing rule so every chat uses IGPPT for presentations (Copilot reads copilot-instructions.md; Codex, Cursor, Gemini read AGENTS.md)
-  mkdir -p "$TARGET/.github"
-  for f in "$TARGET/.github/copilot-instructions.md" "$TARGET/AGENTS.md"; do
-    grep -q "Presentations (IGPPT)" "$f" 2>/dev/null || { printf '\n' >> "$f"; cat "$HERE/default-rule.md" >> "$f"; echo "  rule   -> $f"; }
-  done
   mkdir -p "$TARGET/.github/agents"
   cp "$HERE/copilot/agents/igppt.agent.md" "$TARGET/.github/agents/igppt.agent.md"
   echo "  agent  -> $TARGET/.github/agents/igppt.agent.md"
 fi
 
-if command -v python3 >/dev/null 2>&1; then
-  python3 -m pip install --quiet -r "$HERE/igppt/requirements.txt" && echo "  python-pptx installed"
+if [ "$TARGET" != "--user" ]; then
+  if command -v python3 >/dev/null 2>&1; then (cd "$TARGET" && python3 .github/skills/igppt/scripts/init.py)
+  else echo "  Python 3 not found: install it, then run: python .github/skills/igppt/scripts/init.py"; fi
 else
-  echo "  Python 3 not found: install it, then run: pip install python-pptx"
+  python3 -m pip install --quiet -r "$HERE/igppt/requirements.txt" 2>/dev/null && echo "  python-pptx installed"
 fi
 command -v soffice >/dev/null 2>&1 || echo "  Optional: install LibreOffice so the skill can render slide previews."
 echo "Done."

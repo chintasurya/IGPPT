@@ -23,7 +23,7 @@ Find the scripts: this skill's folder is wherever this `SKILL.md` is. Common loc
 You write a short JSON **spec** that lists the slides; `scripts/build_deck.py` lays every slide out on the IG template (title, section label, footer logo, page numbers, brand colours, font sizes that fit). You choose content and slide types; the script handles design.
 
 ```bash
-pip install python-pptx                                   # once
+python scripts/init.py                                    # once per project (run from the project root): set-up + self-test
 python scripts/build_deck.py deck.json out.pptx           # build
 python scripts/check_deck.py out.pptx                     # must print PASS before you deliver
 python scripts/render_preview.py out.pptx previews/       # optional: images for checking (needs LibreOffice)

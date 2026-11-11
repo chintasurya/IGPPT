@@ -16,6 +16,7 @@ It follows the open Agent Skills format (a folder with `SKILL.md`), so the same 
 | `igppt/references/ig-brand.md` | IG layouts, colours, fonts, icons |
 | `igppt/scripts/build_deck.py` | Builds a deck from a JSON spec |
 | `igppt/scripts/ig_kit.py` | Library behind it, for custom slides |
+| `igppt/scripts/init.py` | One-time project set-up and self-test |
 | `igppt/scripts/check_deck.py` | Confirms a deck was built on the IG template and nothing overflows |
 | `igppt/scripts/render_preview.py` | Slide images for checking (needs LibreOffice) |
 | `igppt/scripts/deck_text.py` | Reads an existing deck's text |
@@ -39,33 +40,25 @@ It asks which AI tools to install into. To choose them in the command instead:
 npx skills add chintasurya/igppt -a github-copilot -a claude-code -a codex -a cursor -a gemini-cli --copy -y
 ```
 
-Add `-g` to install for yourself across all projects. Then install the one Python library:
-
-```bash
-pip install python-pptx
-```
+Add `-g` to install for yourself across all projects.
 
 This uses the open-source [skills CLI](https://github.com/vercel-labs/skills), which supports GitHub Copilot, OpenAI Codex, Claude Code, Cursor, Gemini CLI and many more. Skills land in `.agents/skills/igppt` (shared by Copilot, Codex, Cursor and Gemini CLI) and `.claude/skills/igppt`.
 
 Update later with `npx skills update`; remove with `npx skills remove igppt`.
 
-### Make it the default (recommended)
+### Initialise the project (required, once per project)
 
-So a plain "create a presentation about ..." always uses IGPPT, add the standing rule in `default-rule.md` to the project once. Copilot reads `.github/copilot-instructions.md` in every chat; Codex, Cursor and Gemini CLI read `AGENTS.md`.
-
-Mac/Linux:
+Right after installing, run the init command from the project's root folder:
 
 ```bash
-mkdir -p .github && curl -fsSL https://raw.githubusercontent.com/chintasurya/igppt/main/default-rule.md | tee -a .github/copilot-instructions.md >> AGENTS.md
+python .agents/skills/igppt/scripts/init.py
 ```
 
-Windows PowerShell:
+(Use `.github/skills/...` or `.claude/skills/...` instead if that is where the skill was installed.)
 
-```powershell
-New-Item -ItemType Directory -Force .github | Out-Null; $r = (Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/chintasurya/igppt/main/default-rule.md).Content; Add-Content .github\copilot-instructions.md $r; Add-Content AGENTS.md $r
-```
+It checks Python and installs `python-pptx`, checks the IG template, writes the standing rule that makes assistants use IGPPT for every presentation request (`.github/copilot-instructions.md`, `AGENTS.md`, `CLAUDE.md`), adds a `/igppt` command to Copilot Chat, turns on agent skills in VS Code for the project, and builds and checks a test deck. It ends with "Ready." when everything works. Safe to run again.
 
-`install.sh` / `install.ps1` add this rule automatically.
+Then reload VS Code, open Copilot Chat in **Agent** mode, and simply ask for a presentation (or type `/igppt`).
 
 ## Claude (claude.ai, desktop and mobile apps)
 
