@@ -7,6 +7,17 @@ description: Builds every PowerPoint deck in Insight Global branding using the b
 
 Turns a request ("make a 6-slide update on Q3 for the leadership call") into a finished, editable `.pptx` on the Insight Global template. The template, fonts, colours, icons and layouts are bundled in this skill; never ask the requester to upload a template.
 
+## Required: build only with the bundled scripts
+
+These rules override any general habit of writing slide code:
+
+1. **Never write your own python-pptx, pptxgenjs, HTML or Office code to make slides, and never start from a blank or default PowerPoint.** Decks made that way lose the IG layouts, fonts, footer and auto-fitting, and text overflows.
+2. **Always** write a JSON spec and run `scripts/build_deck.py`. It is the only supported way to create slides.
+3. **Always** run `scripts/check_deck.py` on the result. Deliver the deck only if it prints `PASS`. If it prints `FAIL`, change the spec (shorter text, fewer items) and rebuild; do not edit the .pptx by hand.
+4. If you cannot run Python in this environment, do not produce a .pptx at all. Reply with the JSON spec and the command to build it.
+
+Find the scripts: this skill's folder is wherever this `SKILL.md` is. Common locations are `.agents/skills/igppt`, `.github/skills/igppt`, `.claude/skills/igppt`, `~/.claude/skills/igppt`, `~/.copilot/skills/igppt`, or under `/mnt/skills`. If unsure, search for `igppt/scripts/build_deck.py`.
+
 ## How it works
 
 You write a short JSON **spec** that lists the slides; `scripts/build_deck.py` lays every slide out on the IG template (title, section label, footer logo, page numbers, brand colours, font sizes that fit). You choose content and slide types; the script handles design.
@@ -14,6 +25,7 @@ You write a short JSON **spec** that lists the slides; `scripts/build_deck.py` l
 ```bash
 pip install python-pptx                                   # once
 python scripts/build_deck.py deck.json out.pptx           # build
+python scripts/check_deck.py out.pptx                     # must print PASS before you deliver
 python scripts/render_preview.py out.pptx previews/       # optional: images for checking (needs LibreOffice)
 ```
 
@@ -26,7 +38,7 @@ Paths are relative to this skill's folder. Read `references/spec-format.md` for 
 3. **Write the storyline**: one message per slide, written as the slide title (a takeaway such as "Ticket Volume Is Falling", not a topic such as "Tickets"). Titles of 45 characters or fewer.
 4. **Write the spec.** Choose the slide type that shows each message best (numbers → `stats`, steps → `process`, dates → `timeline`, options → `comparison` or `cards`, data series → `chart`, detail → `table`). Vary types; avoid more than two `bullets` slides in a row. Put sources and assumptions in a `note`. Put talking points in `notes`.
 5. **Build**, read the printed warnings, and fix them (shorter text, fewer items, split a slide).
-6. **Check.** Render previews when LibreOffice is available and look at every image: overflow, crowding, empty slides. Then run the checks below.
+6. **Check.** Run `scripts/check_deck.py` and fix anything it reports. Render previews when LibreOffice is available and look at every image: overflow, crowding, empty slides. Then apply the content rules below.
 7. **Deliver** the `.pptx` with a short reply: what the deck covers, slide list, and any assumptions or placeholders the requester must fill.
 
 When you are editing an existing deck the requester supplied, read it first with `python scripts/deck_text.py file.pptx`, keep its order and wording unless asked, and show previews before replacing anything.
@@ -50,7 +62,7 @@ When you are editing an existing deck the requester supplied, read it first with
 
 ## Custom slides
 
-If no slide type fits, write a short Python script with `scripts/ig_kit.py` (`Deck`, `Canvas` and helpers such as `card`, `table`, `chart`, `steps_flow`, `schedule`, `milestones`, `stat_tile`). It uses the same template and theme. Each helper has a docstring.
+Only if no slide type fits, write a short Python script that imports `scripts/ig_kit.py` (never python-pptx on its own) (`Deck`, `Canvas` and helpers such as `card`, `table`, `chart`, `steps_flow`, `schedule`, `milestones`, `stat_tile`). It uses the same template and theme. Each helper has a docstring.
 
 ## When you cannot run code
 

@@ -161,7 +161,7 @@ class Deck:
         for ph in s.placeholders:  # lift the title a little so a subtitle fits beneath it
             if ph.placeholder_format.idx == 0:
                 ph.left, ph.top, ph.width, ph.height = Inches(0.556), Inches(0.822), Inches(12.08), Inches(0.968)
-                ph.text_frame.paragraphs[0].runs[0].font.size = Pt(fit_size(title, 12.0, 0.9, 40, 28, line_spacing=1.1))
+                ph.text_frame.paragraphs[0].runs[0].font.size = Pt(fit_size(title, 10.5, 0.62, 40, 24, line_spacing=1.1))  # one line; bold titles run wide
         c = Canvas(s, t)
         c.top = TOP_WITH_SUBTITLE if subtitle else TOP_NO_SUBTITLE
         if subtitle:

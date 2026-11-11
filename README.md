@@ -16,6 +16,7 @@ It follows the open Agent Skills format (a folder with `SKILL.md`), so the same 
 | `igppt/references/ig-brand.md` | IG layouts, colours, fonts, icons |
 | `igppt/scripts/build_deck.py` | Builds a deck from a JSON spec |
 | `igppt/scripts/ig_kit.py` | Library behind it, for custom slides |
+| `igppt/scripts/check_deck.py` | Confirms a deck was built on the IG template and nothing overflows |
 | `igppt/scripts/render_preview.py` | Slide images for checking (needs LibreOffice) |
 | `igppt/scripts/deck_text.py` | Reads an existing deck's text |
 | `igppt/assets/ig-template.pptx` | The IG template (layouts only) |
