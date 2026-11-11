@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-// IGPPT installer: installs the IGPPT skill and creates the IGPPT agent.
-//   npx github:chintasurya/igppt            install into the current project
-//   npx github:chintasurya/igppt --global   install for your user (all projects)
+// IGPPT installer: installs the IGPPT skill, the IGPPT agent, the standing instructions and the starter prompts.
+//   npx igppt@latest              install or update in the current project (run it in the project folder)
+//   npx igppt@latest --global     install for your user (all projects)
+//   npx igppt@latest --offline    use the copy inside this package instead of downloading the newest from GitHub
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
@@ -11,6 +12,7 @@ const BUNDLED = path.resolve(__dirname, "..");
 const REPO = "chintasurya/igppt";
 const args = process.argv.slice(2);
 const isGlobal = args.includes("--global") || args.includes("-g");
+const offline = args.includes("--offline");
 const root = isGlobal ? os.homedir() : process.cwd();
 
 const skillDirs = isGlobal
@@ -25,7 +27,7 @@ const skip = (src) => !/__pycache__/.test(src);
 // Fetch the latest files from GitHub (like claude-code-templates), so re-running always updates.
 // Falls back to the copy npx downloaded if GitHub cannot be reached.
 async function latestSource() {
-  if (typeof fetch !== "function") return BUNDLED;
+  if (offline || typeof fetch !== "function") return BUNDLED;
   try {
     // pin to the newest commit so a fresh push is picked up immediately (the "main" file cache lags a few minutes)
     let ref = "main";
@@ -104,9 +106,25 @@ if (isGlobal) {
   if (r.status !== 0) process.exit(r.status || 1);
 }
 console.log(`
-Done. IGPPT is installed with the Insight Global template.
-Now ask your assistant for a presentation, for example:
-  "Create a 3-slide solution design deck for ShieldForge"
-(Copilot: you can also pick the IGPPT agent, or type /igppt.)
-`);
+Done. IGPPT is installed with the Insight Global template, the IGPPT agent, the standing
+instructions and the starter prompts. Every deck is validated before it is saved.
+
+Next:
+  1. Reload VS Code (Ctrl+Shift+P, "Developer: Reload Window").
+  2. Open Copilot Chat in Agent mode and pick the IGPPT agent (or just ask for a deck).
+  3. Try a starter prompt:
+       /igppt              any deck
+       /igppt-quarterly    Q1-Q4 update or QBR
+       /igppt-from-notes   paste an email, chat or notes
+       /igppt-proposal     proposal or solution design
+       /igppt-update-deck  change an existing deck
+     or simply type, for example:
+       "Make a 7-slide Q3 update for the leadership call. SLA 98%, 1,240 tickets."
+  4. Allow Copilot to run the terminal command it proposes; that is how the deck is built and checked.
+
+Run the same command again at any time to update to the latest version.
+` + (isGlobal ? `
+Note: with --global the skill and agent are installed for your user. The starter prompts and the
+"always use IGPPT" instructions are per project: run the command without --global inside a project.
+` : ""));
 })();

@@ -34,15 +34,32 @@ It follows the open Agent Skills format (a folder with `SKILL.md`), so the same 
 
 ## Install: one command
 
-Paste this into Copilot (or any assistant that can run commands, or a terminal) inside the project:
+Open the project folder in VS Code, then paste this into the terminal, or into Copilot Chat in Agent mode and let it run the command:
+
+```bash
+npx igppt@latest
+```
+
+Until the package is published to npm (see Maintainers), use the same installer straight from GitHub:
 
 ```bash
 npx -y https://codeload.github.com/chintasurya/igppt/tar.gz/refs/heads/main
 ```
 
-It downloads the latest IGPPT over HTTPS every time it runs (no git and no login needed), writes the full skill with the IG template to `.claude/skills/igppt`, `.github/skills/igppt` and `.agents/skills/igppt`, creates the **IGPPT agent**, writes the "always use IGPPT for presentations" rule, installs `python-pptx`, and builds a test deck that must pass. Run the same command again to update. Add `--global` at the end to install for your user across all projects.
+Either command downloads the newest IGPPT from GitHub every time it runs (no git and no login needed) and sets up everything in the project:
 
-Needs Node.js and Python 3.9+.
+| What | Where |
+|---|---|
+| The skill, with the IG template, builder and validator | `.github/skills/igppt`, `.agents/skills/igppt`, `.claude/skills/igppt` |
+| The **IGPPT agent** | `.github/agents/igppt.agent.md` (Copilot), `.claude/agents/igppt.md` (Claude Code) |
+| The standing rule "always use IGPPT for presentations" | `.github/copilot-instructions.md`, `AGENTS.md`, `CLAUDE.md` |
+| Starter prompts as slash commands: `/igppt`, `/igppt-quarterly`, `/igppt-from-notes`, `/igppt-proposal`, `/igppt-update-deck` | `.github/prompts` (Copilot), `.claude/commands` (Claude Code) |
+| Agent skills turned on in VS Code | `.vscode/settings.json` |
+| Word list for client and product names | `igppt-words.txt` |
+
+It also installs `python-pptx` and builds and validates a test deck, which must pass. It ends with "Ready." Run the same command again to update. Add `--global` to install the skill and agent for your user across all projects. Add `--offline` to use the copy inside the package instead of the newest from GitHub.
+
+Needs Node.js and Python 3.9 or newer on the computer. The decks are built and validated on that computer, by the person's own Copilot.
 
 ## Install with the skills CLI (alternative)
 
@@ -176,3 +193,17 @@ After changing anything in `igppt/` or `copilot/`:
 3. rebuild `chatgpt/igppt-skill.zip` (the `igppt/` folder, without `__pycache__`),
 
 then commit; the installer downloads the files listed in `manifest.json`.
+
+### Publishing to npm (once, so `npx igppt@latest` works)
+
+The name `igppt` was free on npm when this was written. Before publishing, make sure Insight Global is happy for the template and brand assets to be downloadable from npm; they are already public in this GitHub repository.
+
+```bash
+npm login
+```
+
+```bash
+npm publish
+```
+
+Run both from the repository root, on `main`. After that, `npx igppt@latest` works for everyone. The installer always downloads the newest files from GitHub `main`, so you only need to publish again when `bin/igppt.js` itself changes (raise `version` in `package.json` first).
