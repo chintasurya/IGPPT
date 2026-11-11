@@ -38,6 +38,14 @@ These rules override any general habit of writing slide code:
 
 Find the scripts: this skill's folder is wherever this `SKILL.md` is. Common locations are `.agents/skills/igppt`, `.github/skills/igppt`, `.claude/skills/igppt`, `~/.claude/skills/igppt`, `~/.copilot/skills/igppt`, or under `/mnt/skills`. If unsure, search for `igppt/scripts/make_deck.py`.
 
+### In Microsoft 365 Copilot, ChatGPT or another hosted sandbox
+
+- Call the scripts by their full path inside this skill's folder (for example `python /home/oai/skills/.../igppt/scripts/make_deck.py`). Find it with `find / -name make_deck.py -path "*igppt*" 2>/dev/null` if needed.
+- The skill folder may be read-only. Write `deck.json` and the `.pptx` to a writable working folder: `/mnt/data` if it exists, otherwise the current folder.
+- If `python-pptx` is missing, try `python -m pip install python-pptx`. If that fails, say so and give the JSON spec; never make slides another way.
+- If the agent also has another PowerPoint or deck skill, ignore it for Insight Global decks. Use only this skill.
+- When `make_deck.py` prints `SAVED`, offer that `.pptx` file to the user for download.
+
 ## How it works
 
 You write a short JSON **spec** that lists the slides; `scripts/make_deck.py` lays every slide out on the IG template (title, section label, footer logo, page numbers, brand colours, font sizes that fit) and then validates the result. You choose content and slide types; the scripts handle design and checking.

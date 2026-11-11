@@ -30,6 +30,8 @@ It follows the open Agent Skills format (a folder with `SKILL.md`), so the same 
 | `copilot/agents/igppt.agent.md` | "IGPPT" custom agent for Copilot |
 | `chatgpt/GPT-instructions.md` | Set-up and instructions for a ChatGPT custom GPT |
 | `chatgpt/igppt-skill.zip` | The skill packed for upload to a custom GPT |
+| `copilot/igppt-m365-skill.zip` | The skill packed for Microsoft 365 Copilot Agent Builder (SKILL.md at the zip root) |
+| `copilot/M365-AGENT-SETUP.md` | Step-by-step set-up of the IGPPT agent in Microsoft 365 Copilot |
 | `tools/test_igppt.py` | Regression tests: clean decks pass, broken decks fail |
 
 ## Install: one command
@@ -174,9 +176,11 @@ Limits to know about:
 - Spelling is English (US and UK spellings). It cannot judge grammar, wrong-but-real words ("form" for "from"), or whether a name is spelled right.
 - The validator checks geometry and text; it does not look at the rendered picture. Use `--preview` for a final look when LibreOffice is installed.
 
-## Microsoft 365 Copilot (Teams, Outlook)
+## Microsoft 365 Copilot (Agent Builder)
 
-This skill runs in assistants that can run Python in a workspace (GitHub Copilot agent mode, Copilot CLI, Claude Code). Microsoft 365 Copilot agents built in Copilot Studio cannot run it directly. To trigger decks from Teams or email, host `make_deck.py` behind an internal service (for example an Azure Function that takes a JSON spec and returns the `.pptx`) and call it from a Copilot Studio action, with this skill's `SKILL.md` and references as the agent's instructions.
+Microsoft 365 Copilot cannot run install commands, but its agents can use uploaded **skills** that run Python. Upload `copilot/igppt-m365-skill.zip` (SKILL.md at the root of the zip, as Agent Builder requires) as the agent's skill, paste the agent instructions, and share the agent. Step-by-step guide: [`copilot/M365-AGENT-SETUP.md`](copilot/M365-AGENT-SETUP.md).
+
+If Agent Builder creates its own skill (for example `igppt-deck-builder` with a `main.py`), remove it: it does not use the IG template.
 
 ## Notes
 
@@ -190,7 +194,7 @@ After changing anything in `igppt/` or `copilot/`:
 
 1. `python tools/test_igppt.py` (all tests must pass),
 2. `python tools/make_manifest.py`,
-3. rebuild `chatgpt/igppt-skill.zip` (the `igppt/` folder, without `__pycache__`),
+3. `python tools/build_zips.py` (rebuilds `chatgpt/igppt-skill.zip` and `copilot/igppt-m365-skill.zip`),
 
 then commit; the installer downloads the files listed in `manifest.json`.
 

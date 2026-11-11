@@ -1,5 +1,6 @@
 {
  "files": [
+  "copilot/M365-AGENT-SETUP.md",
   "copilot/agents/igppt.agent.md",
   "igppt/SKILL.md",
   "igppt/assets/font-metrics.json",
@@ -78,6 +79,7 @@
   "igppt/assets/ig-template.pptx",
   "igppt/assets/wordlist.txt",
   "igppt/examples/sample-deck.json",
+  "igppt/examples/shieldforge-3-slide.json",
   "igppt/references/deck-recipes.md",
   "igppt/references/ig-brand.md",
   "igppt/references/spec-format.md",
