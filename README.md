@@ -2,7 +2,7 @@
 
 Lets an AI assistant build any PowerPoint deck in Insight Global branding: status updates, proposals, kickoffs, QBRs, training, demos, pitches. The IG template, fonts, colours, icons and slide designs are bundled, so nobody uploads a template.
 
-The assistant writes a short JSON list of slides; the skill turns it into a finished, editable `.pptx` on the IG template (dark or light), with layout and font sizes handled automatically.
+The assistant writes a short JSON list of slides; the skill turns it into a finished, editable `.pptx` on the IG template (dark or light), with layout and font sizes handled automatically, and validates the deck before saving it: IG template, fonts and colours, no overflowing or overlapping text, spacing, no em dashes, spelling.
 
 It follows the open Agent Skills format (a folder with `SKILL.md`), so the same folder works in GitHub Copilot (VS Code agent mode, Copilot CLI, Copilot cloud agent) and Claude Code.
 
@@ -14,10 +14,15 @@ It follows the open Agent Skills format (a folder with `SKILL.md`), so the same 
 | `igppt/references/deck-recipes.md` | Storylines for common deck requests |
 | `igppt/references/spec-format.md` | Every slide type and field |
 | `igppt/references/ig-brand.md` | IG layouts, colours, fonts, icons |
-| `igppt/scripts/build_deck.py` | Builds a deck from a JSON spec |
+| `igppt/scripts/make_deck.py` | The one command: checks and fixes the spec, builds, validates, saves only on PASS |
+| `igppt/scripts/validate.py` | Validates a deck: template, fonts, colours, fit, overlap, spacing, dashes, spelling |
+| `igppt/scripts/build_deck.py` | Builds a deck from a JSON spec (used by `make_deck.py`) |
 | `igppt/scripts/ig_kit.py` | Library behind it, for custom slides |
+| `igppt/scripts/ig_metrics.py`, `ig_text.py` | Text measuring and text rules shared by the builder and the validator |
 | `igppt/scripts/init.py` | One-time project set-up and self-test |
-| `igppt/scripts/check_deck.py` | Confirms a deck was built on the IG template and nothing overflows |
+| `igppt/scripts/check_deck.py` | Older name for `validate.py` |
+| `igppt/scripts/vendor/spellchecker` | Bundled spell checker (pyspellchecker, MIT), so no install is needed |
+| `igppt/assets/wordlist.txt` | Business and technology words the spell check accepts |
 | `igppt/scripts/render_preview.py` | Slide images for checking (needs LibreOffice) |
 | `igppt/scripts/deck_text.py` | Reads an existing deck's text |
 | `igppt/assets/ig-template.pptx` | The IG template (layouts only) |
@@ -25,6 +30,7 @@ It follows the open Agent Skills format (a folder with `SKILL.md`), so the same 
 | `copilot/agents/igppt.agent.md` | "IGPPT" custom agent for Copilot |
 | `chatgpt/GPT-instructions.md` | Set-up and instructions for a ChatGPT custom GPT |
 | `chatgpt/igppt-skill.zip` | The skill packed for upload to a custom GPT |
+| `tools/test_igppt.py` | Regression tests: clean decks pass, broken decks fail |
 
 ## Install: one command
 
@@ -128,13 +134,32 @@ Paste a chat thread or email and ask for a deck from it; the agent works out the
 Try the example yourself:
 
 ```bash
-python igppt/scripts/build_deck.py igppt/examples/sample-deck.json sample.pptx
-python igppt/scripts/build_deck.py igppt/examples/sample-deck.json sample-light.pptx --theme light
+python igppt/scripts/make_deck.py igppt/examples/sample-deck.json sample.pptx
+python igppt/scripts/make_deck.py igppt/examples/sample-deck.json sample-light.pptx --theme light
 ```
+
+## Validation
+
+`make_deck.py` saves a deck only when `validate.py` passes it. On FAIL nothing is saved, and every problem names the spec field to change, so the assistant fixes the spec and runs the same command again without a person stepping in. For example:
+
+```text
+FAIL  slide 3: spelling: 'buisness' (did you mean 'business'?): 'About 19 per buisness day.'
+      fix: correct the spelling in slides[2].stats[1].text
+FAIL  slide 6: text overflows its box by 0.34 in and crosses the edge of a card or shape: 'Moved every release onto...'
+      fix: cut about 49 characters (or move some of it to another slide) in slides[5].steps[0].text
+```
+
+What fails: a deck not built by IGPPT or not on the IG template; any font other than Trenda IG Text; colours outside the IG palette; text that overflows into other text, crosses a card edge or sits over an icon; words broken across lines; titles that wrap; anything off the slide, past the margins or into the footer; shapes overlapping; em dashes, en dashes and `--` (fixed automatically in the spec); repeated words; leftover placeholder text; likely spelling mistakes; content the builder would have dropped. Unknown names are warnings; add correct ones to `igppt-words.txt` next to the spec.
+
+Limits to know about:
+
+- Text is measured with Inter's character widths, because the Trenda IG Text font files are not bundled. Measurements match LibreOffice renders closely and include a 2% safety margin, but Trenda in real PowerPoint may lay out a little differently. If you have the Trenda files, `python tools/make_font_metrics.py regular.otf bold.otf light.otf` rebuilds the widths from the real font.
+- Spelling is English (US and UK spellings). It cannot judge grammar, wrong-but-real words ("form" for "from"), or whether a name is spelled right.
+- The validator checks geometry and text; it does not look at the rendered picture. Use `--preview` for a final look when LibreOffice is installed.
 
 ## Microsoft 365 Copilot (Teams, Outlook)
 
-This skill runs in assistants that can run Python in a workspace (GitHub Copilot agent mode, Copilot CLI, Claude Code). Microsoft 365 Copilot agents built in Copilot Studio cannot run it directly. To trigger decks from Teams or email, host `build_deck.py` behind an internal service (for example an Azure Function that takes a JSON spec and returns the `.pptx`) and call it from a Copilot Studio action, with this skill's `SKILL.md` and references as the agent's instructions.
+This skill runs in assistants that can run Python in a workspace (GitHub Copilot agent mode, Copilot CLI, Claude Code). Microsoft 365 Copilot agents built in Copilot Studio cannot run it directly. To trigger decks from Teams or email, host `make_deck.py` behind an internal service (for example an Azure Function that takes a JSON spec and returns the `.pptx`) and call it from a Copilot Studio action, with this skill's `SKILL.md` and references as the agent's instructions.
 
 ## Notes
 
@@ -144,4 +169,10 @@ This skill runs in assistants that can run Python in a workspace (GitHub Copilot
 
 ## Maintainers
 
-After changing anything in `igppt/` or `copilot/`, run `python tools/make_manifest.py` and rebuild `chatgpt/igppt-skill.zip` before committing; the installer downloads the files listed in `manifest.json`.
+After changing anything in `igppt/` or `copilot/`:
+
+1. `python tools/test_igppt.py` (all tests must pass),
+2. `python tools/make_manifest.py`,
+3. rebuild `chatgpt/igppt-skill.zip` (the `igppt/` folder, without `__pycache__`),
+
+then commit; the installer downloads the files listed in `manifest.json`.

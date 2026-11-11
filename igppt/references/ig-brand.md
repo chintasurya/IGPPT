@@ -1,6 +1,6 @@
 # Insight Global brand rules (as built into the skill)
 
-Everything here is already applied by `build_deck.py` and `ig_kit.py`. Use the slide types and constants instead of restyling.
+Everything here is already applied by `build_deck.py` and `ig_kit.py`, and checked by `validate.py` (fonts, colours, layouts). Use the slide types and constants instead of restyling.
 
 ## Template
 

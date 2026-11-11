@@ -10,7 +10,8 @@ It:
       CLAUDE.md for Claude Code), with the exact script paths for this project,
   4. adds a /igppt command for Copilot Chat (.github/prompts/igppt.prompt.md),
   5. turns on agent skills in VS Code for this project (.vscode/settings.json),
-  6. builds and checks a test deck to prove everything works.
+  6. adds igppt-words.txt for client and product names the spell check should accept,
+  7. builds and validates a test deck to prove everything works.
 Safe to run again: it updates its own sections and leaves everything else alone.
 """
 import json
@@ -53,7 +54,7 @@ def main():
     root = Path.cwd()
     print(f"IGPPT init in {root}\n")
     py = sys.executable
-    b, chk, prev = (rel(SCRIPTS / n, root) for n in ("build_deck.py", "check_deck.py", "render_preview.py"))
+    mk, val = (rel(SCRIPTS / n, root) for n in ("make_deck.py", "validate.py"))
     skill_rel = rel(SKILL, root)
 
     # 1. Python and python-pptx
@@ -82,11 +83,12 @@ For ANY request to create, make, draft or update a presentation, deck, slides, P
 
 1. Read `{skill_rel}/SKILL.md`, then `{skill_rel}/references/deck-recipes.md` and `{skill_rel}/references/spec-format.md`.
 2. Write the slides as a JSON spec file (for example `deck.json`).
-3. Build: `python {b} deck.json <name>.pptx`
-4. Check: `python {chk} <name>.pptx` and deliver only when it prints PASS. On FAIL, shorten the spec and rebuild.
-5. Reply with the .pptx, the slide list and any assumptions.
+3. Build and validate in one step: `python {mk} deck.json <name>.pptx`. It saves the deck only when every check passes (IG template, fonts, colours, no overflow or overlap, no em dashes, spelling).
+4. On FAIL, each problem names the spec field to change. Edit the spec and run the same command again until it prints SAVED. Fix problems yourself.
+5. Correct names the spell check does not know go in `igppt-words.txt`. Never add a misspelling.
+6. Reply with the .pptx, the slide list and any assumptions.
 
-Never write your own python-pptx, pptxgenjs, HTML or Office code for slides, and never start from a blank or default PowerPoint: that loses the Insight Global template, fonts and layout. The IG template is bundled; never ask for one."""
+Never write your own python-pptx, pptxgenjs, HTML or Office code for slides, never start from a blank or default PowerPoint, and never edit the .pptx by hand: that loses the Insight Global template, fonts and layout, and `{val}` rejects it. The IG template is bundled; never ask for one."""
     for f in (root / ".github" / "copilot-instructions.md", root / "AGENTS.md", root / "CLAUDE.md"):
         upsert(f, rule)
         say(True, f"rule written to {rel(f, root)}")
@@ -100,7 +102,7 @@ agent: agent
 ---
 Create the presentation described below using the IGPPT skill in `{skill_rel}`.
 
-Follow `{skill_rel}/SKILL.md` exactly: write a JSON spec, build it with `python {b} deck.json <name>.pptx`, run `python {chk} <name>.pptx`, and deliver only when it prints PASS. Never write your own slide code or start from a blank PowerPoint.
+Follow `{skill_rel}/SKILL.md` exactly: write a JSON spec, then run `python {mk} deck.json <name>.pptx`. It builds and validates the deck and saves it only when everything passes. On FAIL, change the spec as each problem says and run it again until it prints SAVED. Never write your own slide code, start from a blank PowerPoint, or edit the .pptx by hand.
 
 Request: ${{input:request:What should the deck cover?}}
 """, encoding="utf-8")
@@ -117,14 +119,22 @@ Request: ${{input:request:What should the deck cover?}}
     except (json.JSONDecodeError, OSError):
         say(False, 'add  "chat.useAgentSkills": true  to .vscode/settings.json by hand')
 
-    # 6. Prove it works
+    # 6. Word list for names the spell check should accept
+    words = root / "igppt-words.txt"
+    if not words.exists():
+        words.write_text("# Names and terms the IGPPT spell check should accept: clients, products, people.\n"
+                         "# One per line. Never add a misspelling here.\n", encoding="utf-8")
+    say(True, "word list for names: igppt-words.txt")
+
+    # 7. Prove it works: build and validate the sample deck
     with tempfile.TemporaryDirectory() as tmp:
+        spec = Path(tmp) / "sample.json"
+        spec.write_text((SKILL / "examples" / "sample-deck.json").read_text(encoding="utf-8"), encoding="utf-8")
         out = Path(tmp) / "igppt-test.pptx"
-        r1 = subprocess.run([py, str(SCRIPTS / "build_deck.py"), str(SKILL / "examples" / "sample-deck.json"), str(out)],
-                            capture_output=True, text=True)
-        r2 = subprocess.run([py, str(SCRIPTS / "check_deck.py"), str(out)], capture_output=True, text=True) if r1.returncode == 0 else r1
-        works = r1.returncode == 0 and r2.returncode == 0
-        say(works, "test deck built and checked: PASS" if works else "test deck failed:\n" + (r1.stdout + r1.stderr + r2.stdout)[-800:])
+        r = subprocess.run([py, str(SCRIPTS / "make_deck.py"), str(spec), str(out)], capture_output=True, text=True,
+                           encoding="utf-8", errors="replace")
+        works = r.returncode == 0 and out.exists()
+        say(works, "test deck built and validated: PASS" if works else "test deck failed:\n" + (r.stdout + r.stderr)[-1200:])
     print("\nReady." if works else "\nNot ready: fix the items above and run init again.")
     sys.exit(0 if works else 1)
 

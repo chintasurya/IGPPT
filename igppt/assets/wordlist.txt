@@ -1,0 +1,33 @@
+# Words the IGPPT spell check accepts in addition to the English dictionary.
+# One or more words per line; case does not matter. Put client and project names in igppt-words.txt
+# next to your spec (or in the project folder), not here.
+
+# Insight Global and deck vocabulary
+Insight IGPPT QBR QBRs kickoff kickoffs all-hands one-pager onepager agenda storyline takeaways
+# business
+onboarding offboarding onboard offboard upskilling upskill reskilling reskill headcount backfill backfills
+roadmap roadmaps workstream workstreams deliverable deliverables stakeholder stakeholders signoff sign-off
+go-live golive cutover handover handovers handoff handoffs runbook runbooks playbook playbooks
+learnings retro retros retrospective retrospectives standup standups scrum sprint sprints backlog backlogs
+kanban agile waterfall okr okrs kpi kpis sla slas sow sows msa rfp rfps rfi rfis poc pocs mvp mvps
+roi tco capex opex ytd qtd mtd yoy qoq mom fte ftes cx ux ui ebitda p&l
+vendor vendors subcontractor subcontractors offshore nearshore onshore
+upsell cross-sell renewals churn nps csat ces
+# technology
+api apis sdk sdks saas paas iaas devops devsecops mlops finops sre sres ci cd cicd iac
+cloud multicloud hybrid microservice microservices serverless kubernetes docker terraform ansible
+chatbot chatbots genai llm llms copilot copilots ai ml nlp rag
+uptime downtime failover healthcheck healthchecks observability telemetry dashboard dashboards
+datastore datastores datawarehouse lakehouse etl elt pipeline pipelines dataset datasets
+frontend backend fullstack middleware endpoint endpoints login logins logout signup signups
+cybersecurity infosec iam mfa sso vpn siem soc phishing ransomware patching
+helpdesk servicedesk itsm itil ticketing triage triaged escalations
+# products and platforms
+Jira Confluence ServiceNow Salesforce Workday SharePoint OneDrive Outlook Teams Excel PowerPoint
+Azure AWS GCP Snowflake Databricks Tableau PowerBI Looker Okta Datadog Splunk Zendesk HubSpot
+Slack Zoom Figma GitHub GitLab Bitbucket Jenkins Python Java JavaScript TypeScript SQL NoSQL
+Postgres PostgreSQL MySQL MongoDB Redis Kafka Spark Hadoop Linux Windows macOS iOS Android
+SAP Oracle Dynamics NetSuite Coupa Ariba Guidewire Epic Cerner
+# common abbreviations
+etc e.g i.e vs approx misc info admin admins config configs repo repos dev devs prod qa uat
+wfh hr faq faqs eta asap fyi
