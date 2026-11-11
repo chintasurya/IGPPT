@@ -5,7 +5,8 @@ Shared by validate.py (checks the finished deck) and make_deck.py (checks and au
     problems = check_text("Ticket volume is faling — fast")   # [(level, message), ...]
     fixed, changes = fix_text("Results — strong")              # mechanical fixes only
 
-Spelling uses the bundled pyspellchecker (scripts/vendor, MIT licence) plus two word lists:
+Spelling uses the bundled pyspellchecker (scripts/spellchecker, MIT licence; dictionary in assets/spell-en.json)
+plus two word lists:
   assets/wordlist.txt   business and technology terms that ship with the skill
   igppt-words.txt       optional, next to the spec or in the project folder: client names, product names
 British spellings (colour, organisation, prioritise, centre) are accepted.
@@ -64,18 +65,18 @@ _UK = [("isations", "izations"), ("isation", "ization"), ("ising", "izing"), ("i
 
 
 def _load_spellchecker():
-    """pyspellchecker 0.9.1 (MIT) with its English dictionary is bundled in scripts/vendor, so the
-    spell check works offline and needs no pip install."""
+    """pyspellchecker 0.9.1 (MIT) is bundled in scripts/spellchecker and its English dictionary in
+    assets/spell-en.json, so the spell check works offline and needs no pip install."""
     global _spell
     if _spell is not None:
         return _spell
-    vendor = str(Path(__file__).resolve().parent / "vendor")
-    if vendor not in sys.path:
-        sys.path.insert(0, vendor)
+    here = str(Path(__file__).resolve().parent)
+    if here not in sys.path:
+        sys.path.insert(0, here)
     global spell_error
     try:
         from spellchecker import SpellChecker
-        _spell = SpellChecker(language="en", distance=2)
+        _spell = SpellChecker(language=None, local_dictionary=str(ASSETS / "spell-en.json"), distance=2)
     except Exception as e:  # report why, instead of silently skipping the spell check
         spell_error = f"{type(e).__name__}: {e}"
         _spell = False

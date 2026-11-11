@@ -635,8 +635,8 @@ class Validator:
         for i, slide in enumerate(self.prs.slides, 1):
             self.slide_checks(i, slide)
         if self.spelling and not ig_text.spelling_available():
-            self.r.add("FAIL", 0, f"the bundled spell checker (scripts/vendor) could not load: {ig_text.spell_error}",
-                       fix="reinstall the skill so scripts/vendor/spellchecker is complete")
+            self.r.add("FAIL", 0, f"the bundled spell checker could not load: {ig_text.spell_error}",
+                       fix="reinstall the skill so scripts/spellchecker and assets/spell-en.json are complete")
         seen, items = set(), []
         for it in self.r.items:
             k = (it["level"], it["slide"], it["message"])

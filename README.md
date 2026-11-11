@@ -21,7 +21,7 @@ It follows the open Agent Skills format (a folder with `SKILL.md`), so the same 
 | `igppt/scripts/ig_metrics.py`, `ig_text.py` | Text measuring and text rules shared by the builder and the validator |
 | `igppt/scripts/init.py` | One-time project set-up and self-test |
 | `igppt/scripts/check_deck.py` | Older name for `validate.py` |
-| `igppt/scripts/vendor/spellchecker` | Bundled spell checker (pyspellchecker, MIT), so no install is needed |
+| `igppt/scripts/spellchecker`, `igppt/assets/spell-en.json` | Bundled spell checker and English dictionary (pyspellchecker, MIT), so no install is needed |
 | `igppt/assets/wordlist.txt` | Business and technology words the spell check accepts |
 | `igppt/scripts/render_preview.py` | Slide images for checking (needs LibreOffice) |
 | `igppt/scripts/deck_text.py` | Reads an existing deck's text |
