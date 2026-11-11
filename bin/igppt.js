@@ -7,7 +7,8 @@ const path = require("path");
 const os = require("os");
 const { spawnSync } = require("child_process");
 
-const PKG = path.resolve(__dirname, "..");
+const BUNDLED = path.resolve(__dirname, "..");
+const RAW = "https://raw.githubusercontent.com/chintasurya/igppt/main/";
 const args = process.argv.slice(2);
 const isGlobal = args.includes("--global") || args.includes("-g");
 const root = isGlobal ? os.homedir() : process.cwd();
@@ -20,6 +21,37 @@ const agentFiles = isGlobal
   : [".github/agents/igppt.agent.md", ".claude/agents/igppt.md"];
 
 const skip = (src) => !/__pycache__/.test(src);
+
+// Fetch the latest files from GitHub (like claude-code-templates), so re-running always updates.
+// Falls back to the copy npx downloaded if GitHub cannot be reached.
+async function latestSource() {
+  if (typeof fetch !== "function") return BUNDLED;
+  try {
+    const res = await fetch(RAW + "manifest.json?t=" + Date.now());
+    if (!res.ok) throw new Error("manifest " + res.status);
+    const { files } = await res.json();
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "igppt-"));
+    let i = 0;
+    await Promise.all(Array.from({ length: 6 }, async () => {
+      while (i < files.length) {
+        const f = files[i++];
+        const r = await fetch(RAW + f.split("/").map(encodeURIComponent).join("/"));
+        if (!r.ok) throw new Error(f + " " + r.status);
+        const dst = path.join(tmp, f);
+        fs.mkdirSync(path.dirname(dst), { recursive: true });
+        fs.writeFileSync(dst, Buffer.from(await r.arrayBuffer()));
+      }
+    }));
+    console.log(`  Downloaded the latest IGPPT (${files.length} files) from GitHub`);
+    return tmp;
+  } catch (e) {
+    console.log("  Could not reach GitHub (" + e.message + "); installing the bundled copy");
+    return BUNDLED;
+  }
+}
+
+(async () => {
+const PKG = await latestSource();
 console.log(`\nInstalling IGPPT ${isGlobal ? "for your user" : "into " + root}\n`);
 
 function countFiles(dir) {
@@ -70,3 +102,4 @@ Now ask your assistant for a presentation, for example:
   "Create a 3-slide solution design deck for ShieldForge"
 (Copilot: you can also pick the IGPPT agent, or type /igppt.)
 `);
+})();

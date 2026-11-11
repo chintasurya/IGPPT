@@ -31,10 +31,10 @@ It follows the open Agent Skills format (a folder with `SKILL.md`), so the same 
 Paste this into Copilot (or any assistant that can run commands, or a terminal) inside the project:
 
 ```bash
-npx -y https://codeload.github.com/chintasurya/igppt/tar.gz/main
+npx -y https://codeload.github.com/chintasurya/igppt/tar.gz/refs/heads/main
 ```
 
-It downloads IGPPT over HTTPS (no git and no login needed), writes the full skill with the IG template to `.claude/skills/igppt`, `.github/skills/igppt` and `.agents/skills/igppt`, creates the **IGPPT agent**, writes the "always use IGPPT for presentations" rule, installs `python-pptx`, and builds a test deck that must pass. Run the same command again to update. Add `--global` at the end to install for your user across all projects.
+It downloads the latest IGPPT over HTTPS every time it runs (no git and no login needed), writes the full skill with the IG template to `.claude/skills/igppt`, `.github/skills/igppt` and `.agents/skills/igppt`, creates the **IGPPT agent**, writes the "always use IGPPT for presentations" rule, installs `python-pptx`, and builds a test deck that must pass. Run the same command again to update. Add `--global` at the end to install for your user across all projects.
 
 Needs Node.js and Python 3.9+.
 
@@ -141,3 +141,7 @@ This skill runs in assistants that can run Python in a workspace (GitHub Copilot
 - Install the IG brand fonts (Trenda IG Text) to see the real typeface; otherwise a substitute is shown.
 - The template and brand assets belong to Insight Global, Inc.
 - Icons: Font Awesome Free, CC BY 4.0.
+
+## Maintainers
+
+After changing anything in `igppt/` or `copilot/`, run `python tools/make_manifest.py` and rebuild `chatgpt/igppt-skill.zip` before committing; the installer downloads the files listed in `manifest.json`.
