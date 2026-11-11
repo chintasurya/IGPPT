@@ -2,6 +2,7 @@
  "files": [
   "copilot/agents/igppt.agent.md",
   "igppt/SKILL.md",
+  "igppt/assets/font-metrics.json",
   "igppt/assets/icons/balance-black.png",
   "igppt/assets/icons/balance-white.png",
   "igppt/assets/icons/calendar-black.png",
@@ -75,6 +76,7 @@
   "igppt/assets/icons/workflow-black.png",
   "igppt/assets/icons/workflow-white.png",
   "igppt/assets/ig-template.pptx",
+  "igppt/assets/wordlist.txt",
   "igppt/examples/sample-deck.json",
   "igppt/references/deck-recipes.md",
   "igppt/references/ig-brand.md",
@@ -84,7 +86,18 @@
   "igppt/scripts/check_deck.py",
   "igppt/scripts/deck_text.py",
   "igppt/scripts/ig_kit.py",
+  "igppt/scripts/ig_metrics.py",
+  "igppt/scripts/ig_text.py",
   "igppt/scripts/init.py",
-  "igppt/scripts/render_preview.py"
+  "igppt/scripts/make_deck.py",
+  "igppt/scripts/render_preview.py",
+  "igppt/scripts/validate.py",
+  "igppt/scripts/vendor/README.md",
+  "igppt/scripts/vendor/spellchecker/LICENSE",
+  "igppt/scripts/vendor/spellchecker/__init__.py",
+  "igppt/scripts/vendor/spellchecker/info.py",
+  "igppt/scripts/vendor/spellchecker/resources/en.json.gz",
+  "igppt/scripts/vendor/spellchecker/spellchecker.py",
+  "igppt/scripts/vendor/spellchecker/utils.py"
  ]
 }

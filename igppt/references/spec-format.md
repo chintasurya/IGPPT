@@ -99,6 +99,8 @@ Chart `type`: `column`, `bar` (horizontal), `stacked-column`, `line`, `pie`, `do
 ### closing
 `{"type": "closing", "style": "thank-you"}` (`style`: `thank-you`, `tagline`, `tagline-texture`, `logo`)
 
-## Warnings
+## Building and validating
 
-`build_deck.py` prints warnings for long titles, too many items, unknown icons and missing images. Fix them before delivering.
+Run `python scripts/make_deck.py deck.json out.pptx`. It fixes dashes and double spaces in the spec, builds the deck, validates it, and saves `out.pptx` only on PASS. Each problem names the spec field to change, for example `slides[3].cards[1].text`. Limits that fail the build because content would be dropped: agenda 7 items, cards 6, stats 4, process steps 6, timeline milestones 7, team members 8. Unknown icons fall back to a number with a warning.
+
+Text rules: no em dashes, en dashes or `--` (use a comma, colon or hyphen); no leftover placeholder text such as lorem ipsum or TODO. `[XX%]`-style placeholders are allowed but reported. Names the spell check does not know go in `igppt-words.txt` next to the spec.

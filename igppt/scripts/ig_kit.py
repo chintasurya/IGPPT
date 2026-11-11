@@ -19,7 +19,10 @@ The template draws the title, section label, footer logo and page number. Draw t
 between x 0.6 and 12.73, and between `c.top` and 6.85.
 """
 import math
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from lxml import etree
 from pptx import Presentation
@@ -30,6 +33,8 @@ from pptx.enum.dml import MSO_LINE
 from pptx.enum.shapes import MSO_CONNECTOR, MSO_SHAPE
 from pptx.enum.text import MSO_ANCHOR, PP_ALIGN
 from pptx.util import Inches, Pt
+
+import ig_metrics
 
 ROOT = Path(__file__).resolve().parent.parent
 TEMPLATE = ROOT / "assets" / "ig-template.pptx"
@@ -84,22 +89,24 @@ def columns(n, gap=0.2, x0=LEFT, total=WIDTH):
     return w, [x0 + i * (w + gap) for i in range(n)]
 
 
-def text_height(text, w, size, line_spacing=1.22, para_gap=0.35):
-    """Estimated height (inches) of `text` (str or list of paragraphs) at `size` pt in a box `w` wide."""
-    paras = [text] if isinstance(text, str) else list(text)
-    cpl = max(1, (w * 72) / (0.48 * size))                    # rough characters per line for Trenda
-    lines = sum(max(1, math.ceil(len(p) / cpl)) for p in paras)
-    return (lines * size * line_spacing + (len(paras) - 1) * size * para_gap) / 72
+def text_height(text, w, size, line_spacing=1.0, para_gap=0.35, bold=False):
+    """Height (inches) of `text` (str or list of paragraphs) at `size` pt in a box `w` wide.
+    Measured with real character widths and word wrapping (see ig_metrics.py)."""
+    return ig_metrics.text_height(text, w, size, line_spacing, para_gap, "bold" if bold else "regular")
 
 
-def fit_size(text, w, h, max_size=18, min_size=9, line_spacing=1.22, para_gap=0.35):
-    """Largest font size (pt) at which `text` (str, or list of paragraph strings) fits a w x h box."""
+def fit_size(text, w, h, max_size=18, min_size=9, line_spacing=1.0, para_gap=0.35, bold=False):
+    """Largest font size (pt) at which `text` (str, or list of paragraph strings) fits a w x h box
+    without overflowing or breaking a word. Returns min_size if nothing fits (validate.py then reports it)."""
+    return ig_metrics.fit_size(text, w, h, max_size, min_size, line_spacing, para_gap, "bold" if bold else "regular")
+
+
+def one_line_size(text, w, max_size, min_size, bold=False):
+    """Largest size (pt) at which `text` stays on one line in a box `w` wide."""
     size = max_size
-    while size > min_size:
-        if text_height(text, w, size, line_spacing, para_gap) <= h:
-            return size
+    while size > min_size and ig_metrics.lines_needed(text, w, size, "bold" if bold else "regular") > 1:
         size -= 0.5
-    return min_size
+    return size
 
 
 class Deck:
@@ -149,7 +156,7 @@ class Deck:
         for ph in s.placeholders:
             if ph.placeholder_format.idx == 0:
                 ph.text_frame.text = text
-                ph.text_frame.paragraphs[0].runs[0].font.size = Pt(fit_size(text, 8.0, 2.6, 44, 24))
+                ph.text_frame.paragraphs[0].runs[0].font.size = Pt(fit_size(text, 8.05, 2.55, 44, 24, line_spacing=0.9, bold=True))
         if attribution:
             Canvas(s, DARK).text(0.56, 5.25, 8.2, 0.4, attribution, size=14, color=CYAN)
         return s
@@ -176,15 +183,16 @@ class Deck:
         for ph in s.placeholders:  # lift the title a little so a subtitle fits beneath it
             if ph.placeholder_format.idx == 0:
                 ph.left, ph.top, ph.width, ph.height = Inches(0.556), Inches(0.822), Inches(12.08), Inches(0.968)
-                ph.text_frame.paragraphs[0].runs[0].font.size = Pt(fit_size(title, 10.5, 0.62, 40, 24, line_spacing=1.1))  # one line; bold titles run wide
+                ph.text_frame.paragraphs[0].runs[0].font.size = Pt(one_line_size(title, 11.95, 40, 24, bold=True))  # titles stay on one line
         c = Canvas(s, t)
         c.card_alpha = 82 if layout != t.content_layout else None   # let the gradient show through cards
         c.top = TOP_WITH_SUBTITLE if subtitle else TOP_NO_SUBTITLE
         if subtitle:
-            c.text(0.56, 1.62, 12.1, 0.37, subtitle, size=fit_size(subtitle, 12.1, 0.3, 15, 12), color=t.muted)
+            c.text(0.56, 1.66, 12.1, 0.37, subtitle, size=one_line_size(subtitle, 12.1, 15, 12), color=t.muted)
         return c
 
     def save(self, path):
+        self.prs.core_properties.content_status = "Built with IGPPT"   # validate.py looks for this
         self.prs.save(str(path))
         return path
 
@@ -219,7 +227,7 @@ class Canvas:
         """Text box. `text` is a string or a list of runs {"text", "size", "color", "bold", "light", "italic",
         "spacing", "br"}; "br": True ends the paragraph after that run. fit=(max, min) picks the size automatically."""
         if fit and isinstance(text, str):
-            size = fit_size(text, w, h, *fit)
+            size = fit_size(text, w, h, *fit, bold=bold)
         tb = self.shapes.add_textbox(Inches(x), Inches(y), Inches(w), Inches(h))
         tf = tb.text_frame
         self._frame(tf, valign)
@@ -246,7 +254,13 @@ class Canvas:
             else:
                 flat.append((str(it), 0))
         if size is None:
-            size = fit_size([f for f, _ in flat], w - 0.3, h, *fit, para_gap=gap / 12)
+            size = fit[0]
+            while size > fit[1]:
+                m = ig_metrics.measure([{"runs": [(f, size - 2 * lvl, "regular", 0.0)], "indent": 0.28 + 0.3 * lvl, "after": gap}
+                                        for f, lvl in flat], w)
+                if m["height"] <= h and not m["split_words"]:
+                    break
+                size -= 0.5
         tb = self.shapes.add_textbox(Inches(x), Inches(y), Inches(w), Inches(h))
         tf = tb.text_frame
         self._frame(tf, "top")
@@ -457,7 +471,7 @@ class Canvas:
             if owner:
                 head.append({"text": owner.upper(), "color": self.t.accent(color)})
             self.text(x + 0.72, y + 0.16, w - 0.85, 0.46, head, size=8.5, bold=True, spacing=2, valign="middle")
-            self.text(x + 0.16, y + 0.74, w - 0.32, 0.36, title, size=fit_size(title, w - 0.32, 0.36, 15, 11), bold=True)
+            self.text(x + 0.16, y + 0.74, w - 0.32, 0.36, title, size=fit_size(title, w - 0.32, 0.36, 15, 11, bold=True), bold=True)
             self.text(x + 0.16, y + 1.14, w - 0.32, h - 1.24, desc, fit=(13, 9), color=self.t.muted)
             if i < len(steps) - 1:
                 self.chevron(x + w + (gap - 0.12) / 2, y + h / 2 - 0.13)
@@ -473,7 +487,7 @@ class Canvas:
             c_ = colors[i % len(colors)]
             self.text(x, y, w, 0.4, date, size=15, bold=True, color=self.t.accent(c_))
             self.oval(x, ly - 0.16, 0.32, fill=c_)
-            self.text(x, ly + 0.4, w, 0.42, title, size=fit_size(title, w, 0.42, 17, 11), bold=True)
+            self.text(x, ly + 0.4, w, 0.42, title, size=fit_size(title, w, 0.42, 17, 11, bold=True), bold=True)
             self.text(x, ly + 0.9, w, 1.6, text, fit=(14, 9.5), color=self.t.muted)
 
     def schedule(self, y, slots, rows, label_w=2.15, row_h=0.28, gap=0.07, sub_slots=None):

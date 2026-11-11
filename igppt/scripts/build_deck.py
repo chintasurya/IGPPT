@@ -22,11 +22,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ig_kit import (ACCENTS, BOTTOM, DARK, LEFT, NAVY, RIGHT, WIDTH,  # noqa: E402
                     Deck, columns, fit_size, icon_names, text_height)
 
-WARNINGS = []
+WARNINGS = []      # (slide, message, fatal): fatal means content was lost, so the deck must not be delivered
 
 
-def warn(i, msg):
-    WARNINGS.append(f"slide {i}: {msg}")
+def warn(i, msg, fatal=False):
+    WARNINGS.append((i, msg, fatal))
 
 
 def color_of(item, k):
@@ -52,7 +52,7 @@ def s_title(deck, s, i):
 def s_agenda(deck, s, i):
     items = s.get("items", [])
     if len(items) > 7:
-        warn(i, "agenda shows at most 7 items; the rest were dropped")
+        warn(i, f"agenda shows at most 7 items; {len(items) - 7} were dropped: merge or remove items", fatal=True)
     deck.agenda(items, title=s.get("title", "Agenda"), notes=s.get("notes", ""))
 
 
@@ -101,7 +101,10 @@ def s_cards(deck, s, i):
     c = content(deck, s, i)
     cards = s.get("cards", [])
     if not 2 <= len(cards) <= 6:
-        warn(i, "cards works best with 2 to 6 cards")
+        if len(cards) > 6:
+            warn(i, f"cards shows at most 6 cards; {len(cards) - 6} were dropped: split the slide", fatal=True)
+        else:
+            warn(i, "cards works best with 2 to 6 cards")
         cards = cards[:6]
     bottom = note_band(c, s["note"]) if s.get("note") else BOTTOM
     avail = bottom - c.top
@@ -137,11 +140,11 @@ def s_cards(deck, s, i):
         title = card.get("title", "")
         if compact and not card.get("value"):
             c.text(x + 0.9, y + 0.22, w - (2.4 if card.get("tag") else 1.1), 0.5, title,
-                   size=fit_size(title, w - 1.1, 0.5, 15, 11), bold=True, valign="middle")
+                   size=fit_size(title, w - (2.4 if card.get("tag") else 1.1), 0.5, 15, 11, bold=True), bold=True, valign="middle")
             ty = y + 0.9
         else:
             ty0 = y + (0.95 if card.get("value") else 0.92)
-            c.text(x + 0.25, ty0, w - 0.5, 0.42, title, size=fit_size(title, w - 0.5, 0.42, 16, 11), bold=True)
+            c.text(x + 0.25, ty0, w - 0.5, 0.42, title, size=fit_size(title, w - 0.5, 0.42, 16, 11, bold=True), bold=True)
             ty = ty0 + 0.5
         body = card.get("text", "")
         pts = card.get("bullets")
@@ -153,6 +156,8 @@ def s_cards(deck, s, i):
 
 def s_stats(deck, s, i):
     c = content(deck, s, i)
+    if len(s.get("stats", [])) > 4:
+        warn(i, f"stats shows at most 4 tiles; {len(s['stats']) - 4} were dropped: split the slide", fatal=True)
     stats = s.get("stats", [])[:4]
     bottom = note_band(c, s["note"]) if s.get("note") else BOTTOM
     w, xs = columns(len(stats))
@@ -163,7 +168,7 @@ def s_stats(deck, s, i):
         c.card(x, y, w, h, border=col if st.get("highlight") else None)
         v = str(st.get("value", ""))
         c.text(x + 0.3, y + 0.25, w - 0.6, 1.15, v, size=fit_size(v, w - 0.6, 1.05, 64, 28), color=c.t.accent(col), light=True)
-        c.text(x + 0.3, y + 1.45, w - 0.6, 0.5, st.get("label", ""), size=fit_size(st.get("label", ""), w - 0.6, 0.5, 16, 11), bold=True)
+        c.text(x + 0.3, y + 1.45, w - 0.6, 0.5, st.get("label", ""), size=fit_size(st.get("label", ""), w - 0.6, 0.5, 16, 11, bold=True), bold=True)
         if st.get("text"):
             c.text(x + 0.3, y + 2.0, w - 0.6, h - 2.15, st["text"], fit=(15, 10), color=c.t.muted)
 
@@ -172,7 +177,8 @@ def s_process(deck, s, i):
     c = content(deck, s, i)
     steps = s.get("steps", [])
     if not 2 <= len(steps) <= 6:
-        warn(i, "process works best with 2 to 6 steps"); steps = steps[:6]
+        warn(i, "process works best with 2 to 6 steps" + ("; extra steps were dropped" if len(steps) > 6 else ""), fatal=len(steps) > 6)
+        steps = steps[:6]
     bottom = note_band(c, s["note"]) if s.get("note") else BOTTOM
     rows = []
     for k, st in enumerate(steps):
@@ -186,13 +192,16 @@ def s_process(deck, s, i):
     if s.get("bullets") and bottom - (y0 + h + 0.45) > 0.8:
         y = y0 + h + 0.45
         c.bullets(LEFT, y, WIDTH, bottom - y, s["bullets"], fit=(18, 11))
+    elif s.get("bullets"):
+        warn(i, "no room for the bullets under the steps (they were dropped): remove the note or the bullets", fatal=True)
 
 
 def s_timeline(deck, s, i):
     c = content(deck, s, i)
     ms = s.get("milestones", [])
     if not 2 <= len(ms) <= 7:
-        warn(i, "timeline works best with 2 to 7 milestones"); ms = ms[:7]
+        warn(i, "timeline works best with 2 to 7 milestones" + ("; extra milestones were dropped" if len(ms) > 7 else ""), fatal=len(ms) > 7)
+        ms = ms[:7]
     bottom = note_band(c, s["note"]) if s.get("note") else BOTTOM
     c.milestones(c.top + max(0.3, (bottom - c.top - 3.2) / 2), [(m.get("date", ""), m.get("title", ""), m.get("text", "")) for m in ms],
                  colors=[color_of(m, k) for k, m in enumerate(ms)])
@@ -248,7 +257,7 @@ def s_comparison(deck, s, i):
         y = c.top + 0.25
         if sd.get("tag"):
             c.label(x + 0.3, y, w - 0.6, sd["tag"], color=col); y += 0.35
-        c.text(x + 0.3, y, w - 0.6, 0.5, sd.get("heading", ""), size=fit_size(sd.get("heading", ""), w - 0.6, 0.5, 20, 13), bold=True,
+        c.text(x + 0.3, y, w - 0.6, 0.5, sd.get("heading", ""), size=fit_size(sd.get("heading", ""), w - 0.6, 0.5, 20, 13, bold=True), bold=True,
                color=c.t.accent(col))
         y += 0.65
         c.bullets(x + 0.3, y, w - 0.6, c.top + h - y - 0.2, sd.get("points", []), fit=(20, 11), gap=10)
@@ -259,7 +268,7 @@ def s_image(deck, s, i, base):
     bottom = note_band(c, s["note"]) if s.get("note") else BOTTOM
     path = (base / s["image"]) if s.get("image") else None
     if not path or not path.exists():
-        warn(i, f"image not found: {s.get('image')}"); return
+        warn(i, f"image not found: {s.get('image')}", fatal=True); return
     pts = s.get("bullets")
     cap_h = 0.4 if s.get("caption") else 0
     iw = 7.4 if pts else WIDTH
@@ -273,6 +282,8 @@ def s_image(deck, s, i, base):
 
 def s_team(deck, s, i):
     c = content(deck, s, i)
+    if len(s.get("members", [])) > 8:
+        warn(i, f"team shows at most 8 people; {len(s['members']) - 8} were dropped: split the slide", fatal=True)
     people = s.get("members", [])[:8]
     bottom = note_band(c, s["note"]) if s.get("note") else BOTTOM
     per_row = min(4, len(people)) or 1
@@ -285,7 +296,7 @@ def s_team(deck, s, i):
         c.card(x, y, w, h)
         initials = "".join(part[0] for part in p.get("name", "?").split()[:2]).upper()
         c.oval(x + 0.25, y + 0.25, 0.7, fill=col, text=initials, text_size=16)
-        c.text(x + 1.1, y + 0.25, w - 1.3, 0.35, p.get("name", ""), size=fit_size(p.get("name", ""), w - 1.3, 0.35, 15, 11), bold=True)
+        c.text(x + 1.1, y + 0.25, w - 1.3, 0.35, p.get("name", ""), size=fit_size(p.get("name", ""), w - 1.3, 0.35, 15, 11, bold=True), bold=True)
         c.text(x + 1.1, y + 0.62, w - 1.3, 0.35, p.get("role", ""), size=11, color=c.t.accent(col))
         if p.get("text"):
             c.text(x + 0.25, y + 1.12, w - 0.5, h - 1.25, p["text"], fit=(14, 9), color=c.t.muted)
@@ -298,6 +309,7 @@ TYPES = {"title": s_title, "agenda": s_agenda, "section": s_section, "statement"
 
 
 def build(spec, out, base=Path("."), theme=None):
+    WARNINGS.clear()
     deck = Deck(theme=theme or spec.get("theme", "dark"), background=spec.get("background", "gradient"))
     for i, s in enumerate(spec.get("slides", []), 1):
         kind = s.get("type")
@@ -322,8 +334,8 @@ def main():
     spec = json.loads(spec_path.read_text(encoding="utf-8"))
     build(spec, args[1], base=spec_path.resolve().parent, theme=theme)
     print(f"saved {args[1]} ({len(spec.get('slides', []))} slides)")
-    for w in WARNINGS:
-        print("WARNING", w)
+    for i, msg, fatal in WARNINGS:
+        print(f"{'ERROR' if fatal else 'WARNING'} slide {i}: {msg}")
 
 
 if __name__ == "__main__":
