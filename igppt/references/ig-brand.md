@@ -10,7 +10,7 @@ Everything here is already applied by `build_deck.py` and `ig_kit.py`. Use the s
 |---|---|
 | Title | Proposal Title Slide |
 | Agenda | Dark Title Only_Color (dark) / Light Title Only (light) |
-| Content | Dark Title Only (dark) / Light Title Only (light) |
+| Content | Dark 1-Column_6 (blue gradient) and Dark 1-Column_11 (berry gradient), alternating by default; Dark Title Only_Color (bottom glow) or Dark Title Only (plain black) on request; Light Title Only (light theme) |
 | Section divider | Pink Divider_1 |
 | Statement or quote | Navy Statement Left |
 | Closing | Closer_1 (thank you), Closer_5 (tagline), Closer_4 (tagline, texture), Closer_6 (IG logo) |

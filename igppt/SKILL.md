@@ -54,7 +54,7 @@ When you are editing an existing deck the requester supplied, read it first with
 
 ## Design defaults
 
-- Theme: `dark` (IG black) unless the requester asks for light/white or the deck is for printing. Set `"theme": "light"` at the top of the spec.
+- Theme: `dark` (IG black with the template's blue and berry gradients on content slides) unless the requester asks for light/white or the deck is for printing. Set `"theme": "light"` at the top of the spec. `"background"` picks `gradient` (default), `blue`, `berry`, `glow` or `black`.
 - Start with `title`, add `agenda` for 6+ slides, use `section` slides to separate parts of long decks, end with `closing`.
 - Highlight one thing per slide (`highlight` on one card, step or side).
 - Colours follow the IG order cyan, yellow, magenta, green, orange; the script applies it. Set `color` only to signal meaning (for example green for the recommended option).

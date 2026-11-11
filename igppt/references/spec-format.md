@@ -8,6 +8,8 @@ A spec is a JSON file. Top level:
 
 `theme` is `dark` (default, IG black) or `light`. Any content slide can also take `"theme": "light"` or `"dark"` to override.
 
+`background` (dark theme) sets the IG template background for content slides: `gradient` (default: alternates the template's blue and berry gradients), `blue`, `berry`, `glow` (colour glow along the bottom; avoid with a `note`), or `black`. Any content slide can also take its own `"background"`.
+
 Fields shared by all content slides (everything except `title`, `agenda`, `section`, `statement`, `closing`):
 
 | Field | Meaning |

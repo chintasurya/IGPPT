@@ -73,7 +73,7 @@ def content(deck, s, i):
     if len(title) > 55:
         warn(i, f"title is {len(title)} characters; aim for 45 or fewer")
     return deck.slide(title, eyebrow=s.get("eyebrow", ""), subtitle=s.get("subtitle", ""), notes=s.get("notes", ""),
-                      theme=s.get("theme"))
+                      theme=s.get("theme"), background=s.get("background"))
 
 
 def s_bullets(deck, s, i):
@@ -298,7 +298,7 @@ TYPES = {"title": s_title, "agenda": s_agenda, "section": s_section, "statement"
 
 
 def build(spec, out, base=Path("."), theme=None):
-    deck = Deck(theme=theme or spec.get("theme", "dark"))
+    deck = Deck(theme=theme or spec.get("theme", "dark"), background=spec.get("background", "gradient"))
     for i, s in enumerate(spec.get("slides", []), 1):
         kind = s.get("type")
         if kind not in TYPES:

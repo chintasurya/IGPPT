@@ -14,7 +14,7 @@ from pptx.util import Emu
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ig_kit import FONT, FONT_LIGHT, text_height  # noqa: E402
 
-IG_LAYOUTS = {"Proposal Title Slide", "Dark Title Only", "Dark Title Only_Color", "Light Title Only", "Pink Divider_1",
+IG_LAYOUTS = {"Proposal Title Slide", "Dark Title Only", "Dark 1-Column_6", "Dark 1-Column_11", "Dark Title Only_Color", "Light Title Only", "Pink Divider_1",
               "Navy Statement Left", "Closer_1", "Closer_4", "Closer_5", "Closer_6"}
 IG_FONTS = {FONT, FONT_LIGHT, None}
 
@@ -42,7 +42,7 @@ def main():
                         sizes.append(r.font.size.pt)
                     bold = bold or bool(r.font.bold)
             if shape.is_placeholder and shape.placeholder_format.type is not None and "TITLE" in str(shape.placeholder_format.type) \
-                    and sizes and slide.slide_layout.name in ("Dark Title Only", "Light Title Only"):
+                    and sizes and slide.slide_layout.name in ("Dark Title Only", "Light Title Only", "Dark 1-Column_6", "Dark 1-Column_11", "Dark Title Only_Color"):
                 if text_height(shape.text_frame.text, Emu(shape.width).inches * 0.87, max(sizes), line_spacing=1.1) > 0.7:
                     problems.append(f"slide {i}: title wraps onto two lines: '{shape.text_frame.text[:50]}'")
                 continue

@@ -105,9 +105,16 @@ def fit_size(text, w, h, max_size=18, min_size=9, line_spacing=1.22, para_gap=0.
 class Deck:
     """A presentation on the bundled Insight Global template."""
 
-    def __init__(self, theme="dark", template=TEMPLATE):
+    # IG template backgrounds for dark content slides
+    BACKGROUNDS = {"blue": "Dark 1-Column_6", "berry": "Dark 1-Column_11", "glow": "Dark Title Only_Color", "black": "Dark Title Only"}
+
+    def __init__(self, theme="dark", template=TEMPLATE, background="gradient"):
+        """background (dark theme): "gradient" alternates the template's blue and berry gradients;
+        or fix one of "blue", "berry", "glow" (colour glow along the bottom), "black"."""
         self.prs = Presentation(str(template))
         self.theme = THEMES[theme] if isinstance(theme, str) else theme
+        self.background = background
+        self._content_count = 0
 
     # ----- slide types that use the template's own design -----
     def title(self, title, subtitle="", date="", notes=""):
@@ -153,16 +160,25 @@ class Deck:
         return self._new(layouts[style], notes)
 
     # ----- free-form content slide -----
-    def slide(self, title, eyebrow="", subtitle="", notes="", theme=None):
-        """Content slide with the template title and section label. Returns a Canvas."""
+    def slide(self, title, eyebrow="", subtitle="", notes="", theme=None, background=None):
+        """Content slide with the template title and section label. Returns a Canvas.
+        background overrides the deck background for this slide (dark theme only)."""
         t = THEMES[theme] if isinstance(theme, str) else (theme or self.theme)
-        s = self._new(t.content_layout, notes)
-        self._fill(s, 0, title); self._fill(s, 21, eyebrow)
+        layout = t.content_layout
+        bg = background or self.background
+        if t is DARK:
+            if bg == "gradient":
+                bg = ("blue", "berry")[self._content_count % 2]
+            layout = self.BACKGROUNDS.get(bg, t.content_layout)
+        self._content_count += 1
+        s = self._new(layout, notes)
+        self._fill(s, 0, title); self._fill(s, 21, eyebrow); self._fill(s, 13, "")
         for ph in s.placeholders:  # lift the title a little so a subtitle fits beneath it
             if ph.placeholder_format.idx == 0:
                 ph.left, ph.top, ph.width, ph.height = Inches(0.556), Inches(0.822), Inches(12.08), Inches(0.968)
                 ph.text_frame.paragraphs[0].runs[0].font.size = Pt(fit_size(title, 10.5, 0.62, 40, 24, line_spacing=1.1))  # one line; bold titles run wide
         c = Canvas(s, t)
+        c.card_alpha = 82 if layout != t.content_layout else None   # let the gradient show through cards
         c.top = TOP_WITH_SUBTITLE if subtitle else TOP_NO_SUBTITLE
         if subtitle:
             c.text(0.56, 1.62, 12.1, 0.37, subtitle, size=fit_size(subtitle, 12.1, 0.3, 15, 12), color=t.muted)
@@ -195,6 +211,7 @@ class Canvas:
     def __init__(self, slide, theme=DARK):
         self.slide, self.shapes, self.t = slide, slide.shapes, theme
         self.top = TOP_WITH_SUBTITLE
+        self.card_alpha = None
 
     # ---------- text ----------
     def text(self, x, y, w, h, text, size=12, color=None, bold=False, light=False, italic=False,
@@ -247,6 +264,9 @@ class Canvas:
     def card(self, x, y, w, h, border=None, fill=None, radius=0.1, dash=False, border_width=1):
         """Rounded panel. Give one card a coloured border to highlight it."""
         sh = self._shape(MSO_SHAPE.ROUNDED_RECTANGLE, x, y, w, h, fill or self.t.card, border or self.t.line, border_width)
+        if self.card_alpha and not fill:   # translucent card over a gradient background
+            clr = sh.fill._xPr.find(f"{{{_A}}}solidFill/{{{_A}}}srgbClr")
+            etree.SubElement(clr, f"{{{_A}}}alpha").set("val", str(self.card_alpha * 1000))
         sh.adjustments[0] = min(0.5, radius / min(w, h))
         if dash:
             sh.line.dash_style = MSO_LINE.DASH
