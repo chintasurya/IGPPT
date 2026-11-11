@@ -312,6 +312,8 @@ def build(spec, out, base=Path("."), theme=None):
 
 
 def main():
+    if "--help" in sys.argv or "-h" in sys.argv:
+        print(__doc__); return
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     if len(args) < 2:
         raise SystemExit(__doc__)

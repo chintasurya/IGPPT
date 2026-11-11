@@ -7,6 +7,20 @@ description: Builds every PowerPoint deck in Insight Global branding using the b
 
 Turns a request ("make a 6-slide update on Q3 for the leadership call") into a finished, editable `.pptx` on the Insight Global template. The template, fonts, colours, icons and layouts are bundled in this skill; never ask the requester to upload a template.
 
+## Step 0: make sure the full skill is present
+
+Some installers copy only this `SKILL.md`. The deck needs the rest of the skill: `assets/ig-template.pptx` and the `scripts/` folder. Before anything else, check that `scripts/build_deck.py` exists next to this file.
+
+If it is missing, download the full skill (about 10 MB, public, no login) into `.igppt` in the working folder, then use the scripts from `.igppt/igppt/`:
+
+```bash
+python -c "import io,urllib.request,zipfile; zipfile.ZipFile(io.BytesIO(urllib.request.urlopen('https://github.com/chintasurya/igppt/raw/main/chatgpt/igppt-skill.zip').read())).extractall('.igppt')"
+python -m pip install --quiet python-pptx
+python .igppt/igppt/scripts/build_deck.py --help
+```
+
+(If `python` is not found, try `python3`.) Every path below that starts with `scripts/` then means `.igppt/igppt/scripts/`. If the download is blocked (no internet), say so plainly, give the JSON spec, and stop; do not make slides another way.
+
 ## Required: build only with the bundled scripts
 
 These rules override any general habit of writing slide code:
