@@ -22,12 +22,16 @@ const agentFiles = isGlobal
 const skip = (src) => !/__pycache__/.test(src);
 console.log(`\nInstalling IGPPT ${isGlobal ? "for your user" : "into " + root}\n`);
 
+function countFiles(dir) {
+  return fs.readdirSync(dir, { withFileTypes: true })
+    .reduce((n, e) => n + (e.isDirectory() ? countFiles(path.join(dir, e.name)) : 1), 0);
+}
 for (const d of skillDirs) {
   const dst = path.join(root, d, "igppt");
   fs.rmSync(dst, { recursive: true, force: true });
   fs.mkdirSync(path.dirname(dst), { recursive: true });
   fs.cpSync(path.join(PKG, "igppt"), dst, { recursive: true, filter: skip });
-  console.log("  skill  ->", path.join(d, "igppt"));
+  console.log(`  Writes ${countFiles(dst)} files to ${path.join(d, "igppt")}/`);
 }
 
 const agentSrc = fs.readFileSync(path.join(PKG, "copilot", "agents", "igppt.agent.md"), "utf8");
@@ -61,8 +65,8 @@ if (isGlobal) {
   if (r.status !== 0) process.exit(r.status || 1);
 }
 console.log(`
-Done. To use it:
-  GitHub Copilot (VS Code): reload the window, open Copilot Chat in Agent mode, pick the IGPPT agent (or type /igppt), and ask for a deck.
-  Copilot CLI: start copilot, type /agent and choose igppt, then ask for a deck.
-  Claude Code, Codex, Cursor, Gemini CLI: just ask for a presentation.
+Done. IGPPT is installed with the Insight Global template.
+Now ask your assistant for a presentation, for example:
+  "Create a 3-slide solution design deck for ShieldForge"
+(Copilot: you can also pick the IGPPT agent, or type /igppt.)
 `);

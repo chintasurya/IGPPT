@@ -28,15 +28,15 @@ It follows the open Agent Skills format (a folder with `SKILL.md`), so the same 
 
 ## Install: one command
 
-Run this in a terminal (or in Copilot CLI after `!`) inside the project where you want IGPPT:
+Paste this into Copilot (or any assistant that can run commands, or a terminal) inside the project:
 
 ```bash
-npx github:chintasurya/igppt
+npx -y https://codeload.github.com/chintasurya/igppt/tar.gz/main
 ```
 
-It installs the IGPPT skill for GitHub Copilot, Copilot CLI, Claude Code, Codex, Cursor and Gemini CLI, creates the **IGPPT agent** (`.github/agents/igppt.agent.md`), writes the "always use IGPPT for presentations" rule, adds a `/igppt` command, and runs a self-test that ends with "Ready.". Add `--global` to install for your user across all projects. Run the same command again to update.
+It downloads IGPPT over HTTPS (no git and no login needed), writes the full skill with the IG template to `.claude/skills/igppt`, `.github/skills/igppt` and `.agents/skills/igppt`, creates the **IGPPT agent**, writes the "always use IGPPT for presentations" rule, installs `python-pptx`, and builds a test deck that must pass. Run the same command again to update. Add `--global` at the end to install for your user across all projects.
 
-Needs Node.js 16.7+, git and Python 3.9+.
+Needs Node.js and Python 3.9+.
 
 ## Install with the skills CLI (alternative)
 

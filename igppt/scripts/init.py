@@ -126,7 +126,6 @@ Request: ${{input:request:What should the deck cover?}}
         works = r1.returncode == 0 and r2.returncode == 0
         say(works, "test deck built and checked: PASS" if works else "test deck failed:\n" + (r1.stdout + r1.stderr + r2.stdout)[-800:])
     print("\nReady." if works else "\nNot ready: fix the items above and run init again.")
-    print("In VS Code: reload the window, open Copilot Chat in Agent mode, and ask for a presentation (or type /igppt).")
     sys.exit(0 if works else 1)
 
 
