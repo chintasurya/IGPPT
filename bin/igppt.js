@@ -8,7 +8,7 @@ const os = require("os");
 const { spawnSync } = require("child_process");
 
 const BUNDLED = path.resolve(__dirname, "..");
-const RAW = "https://raw.githubusercontent.com/chintasurya/igppt/main/";
+const REPO = "chintasurya/igppt";
 const args = process.argv.slice(2);
 const isGlobal = args.includes("--global") || args.includes("-g");
 const root = isGlobal ? os.homedir() : process.cwd();
@@ -27,7 +27,14 @@ const skip = (src) => !/__pycache__/.test(src);
 async function latestSource() {
   if (typeof fetch !== "function") return BUNDLED;
   try {
-    const res = await fetch(RAW + "manifest.json?t=" + Date.now());
+    // pin to the newest commit so a fresh push is picked up immediately (the "main" file cache lags a few minutes)
+    let ref = "main";
+    try {
+      const c = await fetch(`https://api.github.com/repos/${REPO}/commits/main`, { headers: { Accept: "application/vnd.github.sha" } });
+      if (c.ok) ref = (await c.text()).trim();
+    } catch (_) { /* keep "main" */ }
+    const RAW = `https://raw.githubusercontent.com/${REPO}/${ref}/`;
+    const res = await fetch(RAW + "manifest.json");
     if (!res.ok) throw new Error("manifest " + res.status);
     const { files } = await res.json();
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "igppt-"));
