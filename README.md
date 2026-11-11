@@ -49,6 +49,24 @@ This uses the open-source [skills CLI](https://github.com/vercel-labs/skills), w
 
 Update later with `npx skills update`; remove with `npx skills remove igppt`.
 
+### Make it the default (recommended)
+
+So a plain "create a presentation about ..." always uses IGPPT, add the standing rule in `default-rule.md` to the project once. Copilot reads `.github/copilot-instructions.md` in every chat; Codex, Cursor and Gemini CLI read `AGENTS.md`.
+
+Mac/Linux:
+
+```bash
+mkdir -p .github && curl -fsSL https://raw.githubusercontent.com/chintasurya/igppt/main/default-rule.md | tee -a .github/copilot-instructions.md >> AGENTS.md
+```
+
+Windows PowerShell:
+
+```powershell
+New-Item -ItemType Directory -Force .github | Out-Null; $r = (Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/chintasurya/igppt/main/default-rule.md).Content; Add-Content .github\copilot-instructions.md $r; Add-Content AGENTS.md $r
+```
+
+`install.sh` / `install.ps1` add this rule automatically.
+
 ## Claude (claude.ai, desktop and mobile apps)
 
 Upload once and Claude uses it in every new chat:

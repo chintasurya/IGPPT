@@ -20,6 +20,13 @@ if ($User) {
   if (-not (Test-Path $Project)) { throw "Not a folder: $Project" }
   Copy-Skill (Join-Path $Project ".github\skills")
   Copy-Skill (Join-Path $Project ".claude\skills")
+  New-Item -ItemType Directory -Force -Path (Join-Path $Project ".github") | Out-Null
+  $Rule = Get-Content -Raw (Join-Path $Here "default-rule.md")
+  foreach ($f in @((Join-Path $Project ".github\copilot-instructions.md"), (Join-Path $Project "AGENTS.md"))) {
+    if (-not ((Test-Path $f) -and (Select-String -Path $f -Pattern "Presentations \(IGPPT\)" -Quiet))) {
+      Add-Content -Path $f -Value ("`n" + $Rule); Write-Host "  rule   -> $f"
+    }
+  }
   $Agents = Join-Path $Project ".github\agents"
   New-Item -ItemType Directory -Force -Path $Agents | Out-Null
   Copy-Item (Join-Path $Here "copilot\agents\igppt.agent.md") (Join-Path $Agents "igppt.agent.md") -Force
