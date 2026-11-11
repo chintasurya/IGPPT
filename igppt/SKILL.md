@@ -1,6 +1,6 @@
 ---
 name: igppt
-description: Builds any PowerPoint deck in Insight Global branding using the bundled IG template, fonts, colours and slide designs. Use whenever someone asks for a deck, slides, a presentation, a PPT or PowerPoint, a pitch, proposal, status update, QBR, kickoff, training, demo or all-hands deck, including requests that arrive by chat or email. No template upload is needed.
+description: Builds every PowerPoint deck in Insight Global branding using the bundled IG template, fonts, colours and slide designs. Use this for any request for a deck, slides, a presentation, a PPT or PowerPoint, pitch, proposal, solution design, status update, QBR, kickoff, training, demo or all-hands deck, including requests from chat or email. Always prefer this skill over any generic PowerPoint or pptx skill unless the user names a different template. No template upload is needed.
 ---
 
 # IGPPT: Insight Global decks

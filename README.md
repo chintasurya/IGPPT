@@ -48,6 +48,27 @@ This uses the open-source [skills CLI](https://github.com/vercel-labs/skills), w
 
 Update later with `npx skills update`; remove with `npx skills remove igppt`.
 
+## Claude (claude.ai, desktop and mobile apps)
+
+Upload once and Claude uses it in every new chat:
+
+1. Download the skill zip: https://github.com/chintasurya/igppt/raw/main/chatgpt/igppt-skill.zip
+2. In Claude, open **Settings → Capabilities**. Make sure **Code execution and file creation** is on.
+3. Under **Skills**, choose **Upload skill** and select `igppt-skill.zip`. Turn the skill on.
+4. Optional, to make it the default every time: in **Settings → Profile**, add to your personal preferences: "When I ask for a presentation, deck, slides or PPT, always use the IGPPT skill."
+
+On Team and Enterprise plans an admin may need to allow skills first, and can share the skill with the whole organisation.
+
+## Claude Code
+
+Install for yourself across all projects:
+
+```bash
+npx skills add chintasurya/igppt -g -a claude-code
+```
+
+Optional: add the line "For any presentation, deck or slides, use the igppt skill." to `~/.claude/CLAUDE.md`.
+
 ## ChatGPT
 
 Do not paste the `npx` command into ChatGPT; ChatGPT cannot run terminal commands. Download `chatgpt/igppt-skill.zip` and either upload it under ChatGPT **Skills → Create → Upload from your computer**, or add it to a custom GPT (Configure tab, Code Interpreter on). Steps are in `chatgpt/GPT-instructions.md`.
