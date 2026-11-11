@@ -34,7 +34,8 @@ const agentSrc = fs.readFileSync(path.join(PKG, "copilot", "agents", "igppt.agen
 for (const f of agentFiles) {
   const dst = path.join(root, f);
   fs.mkdirSync(path.dirname(dst), { recursive: true });
-  fs.writeFileSync(dst, agentSrc);
+  // Claude Code agent names must be lower case
+  fs.writeFileSync(dst, f.includes(".claude") ? agentSrc.replace(/^name: IGPPT$/m, "name: igppt") : agentSrc);
   console.log("  agent  ->", f);
 }
 
