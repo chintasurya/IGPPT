@@ -186,9 +186,10 @@ Limits to know about:
 
 The model behind Copilot cannot be retrained, so IGPPT turns every correction into a **lesson**: a rule checked on every build. When a user says "this is wrong", the agent records it with `scripts/learn.py add` (for example "never 'And' in title case in a title", "at most 5 bullets", "always end with a closing slide"), proves the rule catches the mistake, fixes the deck and rebuilds. `make_deck.py` will not save a deck that breaks a lesson.
 
-Microsoft 365 Copilot wipes the agent's working folder after every chat, so lessons are carried forward in three ways, all loaded by `learn.py start` at the beginning of each chat:
+Microsoft 365 Copilot wipes the agent's working folder after every chat, so lessons are carried forward in four ways, all loaded by `learn.py start` at the beginning of each chat:
 
-1. **Lessons block in the agent's instructions** (recommended): after learning, `learn.py export` prints a block (`<<<IGPPT-LESSONS ... IGPPT-LESSONS>>>`) with a count and checksum. The agent owner pastes it at the end of the agent's instructions; every new chat for every user loads it, and a block damaged in copying is reported instead of half-loaded.
+0. **Lessons skill** (recommended): `learn.py export` also writes `igppt-lessons/SKILL.md`, a one-file skill with every lesson. The agent owner uploads it in Agent Builder (Skills, Upload skill, replacing the previous one); `start` reads it from the agent's skills folder, so nothing is copied by hand.
+1. **Lessons block in the agent's instructions**: after learning, `learn.py export` prints a block (`<<<IGPPT-LESSONS ... IGPPT-LESSONS>>>`) with a count and checksum. The agent owner pastes it at the end of the agent's instructions; every new chat for every user loads it, and a block damaged in copying is reported instead of half-loaded.
 2. **GitHub**: when the sandbox has internet, `start` downloads `igppt/assets/lessons.json` from this repository, so merged lessons apply without re-uploading the skill.
 3. **The skill itself**: `python tools/merge_lessons.py <block.txt or igppt-lessons.json>`, then run the tests, `python tools/build_zips.py`, commit, and re-upload `igppt-m365-skill.zip`.
 

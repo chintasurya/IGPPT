@@ -25,6 +25,9 @@ Kind not checkable by code:
   guidance        --text "..."                read before writing every deck; not enforced, so prefer a checked kind
 
 How lessons survive from one chat to the next (Microsoft 365 Copilot wipes the sandbox after each chat):
+  0. Lessons skill (recommended): `export` also writes igppt-lessons/SKILL.md, a one-file skill. The agent owner
+     uploads it in Agent Builder (Skills, Upload skill). `start` reads it from disk next to this skill, so no
+     text has to be copied by hand. A skill holds up to 20,000 characters.
   1. Lessons block in the agent's instructions: after learning, `export` prints a block; the agent owner pastes it
      at the end of the instructions. At the start of each chat the agent writes that block to a file and `start`
      loads it. The block carries a count and checksum, so a copying mistake is detected.
@@ -259,7 +262,8 @@ def cmd_list(args):
                 "first_slide": f"start with a {l.get('slide_type')} slide", "last_slide": f"end with a {l.get('slide_type')} slide",
                 "forbidden_type": f"never use a {l.get('slide_type')} slide",
                 "guidance": f"READ: {l.get('text')}"}.get(l.get("kind"), l.get("kind"))
-        print(f"{l.get('id', '?'):<14} {l.get('level', 'FAIL'):<5} {what}")
+        lvl = "READ" if l.get("kind") == "guidance" else l.get("level", "FAIL")
+        print(f"{l.get('id', '?'):<14} {lvl:<5} {what}")
         if l.get("mistake") and l.get("kind") != "guidance":
             print(f"{'':20}mistake: {l['mistake']}  fix: {l.get('fix', '')}")
         print(f"{'':20}from {Path(l['_file']).name}")
@@ -345,6 +349,44 @@ def cmd_test(args):
     return 1 if fails else 0
 
 
+def describe(l):
+    m = l.get("word") or l.get("pattern")
+    return {"banned_text": f"Never '{m}' in {l.get('scope', 'any')} text",
+            "required_text": f"Always include '{m}' ({l.get('scope', 'any')})",
+            "max_length": f"{l.get('field')}: at most {l.get('max')} characters",
+            "max_items": f"{l.get('slide_type')} slides: at most {l.get('max')} {l.get('field')}",
+            "first_slide": f"Start with a {l.get('slide_type')} slide", "last_slide": f"End with a {l.get('slide_type')} slide",
+            "forbidden_type": f"Never use a {l.get('slide_type')} slide",
+            "guidance": l.get("text", "")}.get(l.get("kind"), l.get("kind"))
+
+
+def make_skill_md(lessons):
+    """A one-file skill (SKILL.md) holding the lessons: upload it to the agent's Skills to keep them for every chat."""
+    def cell(x):
+        return str(x or "").replace("|", "/").replace("\n", " ")
+    rows = "\n".join(f"| {cell(l.get('id'))} | {cell(describe(l))} | {cell(l.get('mistake'))} | {cell(l.get('fix'))} | "
+                     f"{'enforced' if l.get('kind') != 'guidance' else 'read and follow'} |" for l in lessons)
+    return f"""---
+name: igppt-lessons
+description: Lessons learned from user feedback on Insight Global decks (IGPPT). Read before building any deck. The igppt skill loads and enforces these rules automatically.
+---
+
+# IGPPT lessons from feedback
+
+These rules come from corrections users gave the IGPPT agent. The igppt skill loads this file at the start of every chat (`igppt.py start`), and the deck builder will not save a deck that breaks an enforced rule. Follow the "read and follow" items as well.
+
+| ID | Rule | Mistake it prevents | Fix | How |
+|---|---|---|---|---|
+{rows}
+
+Updated {dt.date.today().isoformat()}: {len(lessons)} lesson(s). To change a lesson, give the feedback to the agent and upload the new file it produces; do not edit the block below by hand (it carries a checksum).
+
+```text
+{make_block(lessons)}
+```
+"""
+
+
 def cmd_export(args):
     lessons = load(Path.cwd())
     if "--all" not in args:
@@ -352,13 +394,29 @@ def cmd_export(args):
         lessons = [l for l in lessons if signature(l) not in bundled]
     if not lessons:
         print("No lessons to export (lessons already in the skill are left out; add --all to include them)."); return 0
+    import zipfile
     block = make_block(lessons)
     out = data_dir() / "igppt-lessons-block.txt"
     out.write_text(block + "\n", encoding="utf-8")
+    skill_dir = data_dir() / "igppt-lessons"
+    skill_dir.mkdir(parents=True, exist_ok=True)
+    md = skill_dir / "SKILL.md"
+    md_text = make_skill_md(lessons)
+    md.write_text(md_text, encoding="utf-8")
+    if len(md_text) > 18000:
+        print(f"WARNING: the lessons skill is {len(md_text):,} characters; Microsoft's limit is 20,000. Ask the IGPPT owner "
+              "to merge these lessons into the igppt skill (tools/merge_lessons.py) and start a fresh lessons file.")
+    zp = data_dir() / "igppt-lessons-skill.zip"
+    with zipfile.ZipFile(zp, "w", zipfile.ZIP_DEFLATED) as z:
+        z.write(md, "SKILL.md")
+    print(f"{len(lessons)} lesson(s) exported.\n")
+    print(f"LESSONS SKILL (recommended): {md}  (also as {zp.name})")
+    print("  Give the user this file to download. The agent owner: Agent Builder, Configure, Skills, remove the old "
+          "'igppt-lessons' skill if there is one, Add, Upload skill, choose this file, then Update. Every new chat then "
+          "loads these lessons automatically.")
+    print(f"\nOR the instructions block ({len(block)} characters, saved to {out.name}): paste it at the end of the agent's "
+          "instructions, replacing any older IGPPT-LESSONS block.\n")
     print(block)
-    print(f"\n{len(lessons)} lesson(s), {len(block)} characters, also saved to {out}.")
-    print("To keep these lessons in every chat: the agent owner opens the agent, Edit, Configure, Instructions, and "
-          "replaces the old lessons block (from <<<IGPPT-LESSONS to IGPPT-LESSONS>>>) with this one, or adds it at the end.")
     return 0
 
 
@@ -416,6 +474,23 @@ def cmd_sync(args):
 def cmd_start(args):
     """Start of every chat: shared lessons from GitHub, then any lessons block or file in the data folder."""
     cmd_sync(list(args))
+    # lessons uploaded as their own skill (igppt-lessons/SKILL.md) sit next to this skill on disk
+    skills_root = Path(os.environ.get("IGPPT_SKILLS_DIR") or SKILL.parent)
+    try:
+        siblings = sorted(d for d in skills_root.iterdir() if d.is_dir() and d.resolve() != SKILL.resolve())
+    except OSError:
+        siblings = []
+    try:   # Microsoft 365 Copilot keeps skills under /home/oai/skills; look there too, in case of another layout
+        siblings += [d.parent for d in Path("/home/oai/skills").glob("*/*/SKILL.md") if "lessons" in d.parent.name
+                     and d.parent not in siblings]
+    except OSError:
+        pass
+    for d in siblings:
+        for f in sorted(d.glob("*.md")):
+            text = f.read_text(encoding="utf-8-sig", errors="replace") if f.stat().st_size < 2_000_000 else ""
+            if "IGPPT-LESSONS" in text:
+                added, problems = import_text(text, f"skill {d.name}")
+                print(f"Loaded {added} lesson(s) from the '{d.name}' skill" + "".join(f"\n  PROBLEM: {p}" for p in problems))
     own = {"igppt-lessons.json", "igppt-lessons-shared.json"}
     for folder in dict.fromkeys([data_dir(), Path.cwd()]):
         for f in sorted(folder.glob("*")):

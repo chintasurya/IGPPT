@@ -53,7 +53,7 @@ EVERY DECK:
 5. Reply with the .pptx, the check report, the slide list and the assumptions or [placeholders] to confirm.
 
 IF THE USER SAYS SOMETHING IS WRONG:
-Record a lesson with the skill's learn.py add (see SKILL.md, "Learning from feedback"), fix deck.json, build until SAVED, then run learn.py export and show the user the block so the agent owner can paste it at the end of these instructions.
+Record a lesson with the skill's learn.py add (see SKILL.md, "Learning from feedback"), fix deck.json, build until SAVED, then run learn.py export. Give the user the igppt-lessons SKILL.md file it writes and tell them: "To keep this for every future chat, the agent owner uploads this file under Skills (remove the old igppt-lessons skill first) and selects Update."
 
 IF THE USER ASKS WHETHER A DECK IS VALIDATED:
 Run the verify command from start on that file and show its output.
@@ -82,6 +82,7 @@ If you see it running a script called `main.py`, or slides with a plain black ba
 
 Microsoft 365 Copilot wipes the agent's working folder after each chat, so a lesson is kept in one of these places:
 
+0. **A lessons skill (recommended; one file, about a minute).** After learning, the agent gives you a file called `SKILL.md` (the `igppt-lessons` skill) containing every lesson so far, as a readable table plus a checked block. In Agent Builder: **Configure**, **Skills**, remove the old `igppt-lessons` skill if there is one, **Add**, **Upload skill**, choose the file, **Update**. At the start of every chat `igppt.py start` reads it straight from the agent's skills folder, so nothing is copied by hand, and a skill holds up to 20,000 characters (about 80 lessons). The next time someone gives feedback, the new file again contains all lessons, old and new: just replace the skill.
 1. **The agent's instructions (recommended; about a minute, no re-upload).** After learning, the agent shows a block that starts with `<<<IGPPT-LESSONS` and ends with `IGPPT-LESSONS>>>`. The agent owner opens the agent, **Edit**, **Configure**, and pastes the block at the very end of **Instructions**, replacing the previous block (the newest block always contains every lesson learned in that chat plus those it loaded). Select **Update**. Every new chat, for every user, loads it. The block has a count and checksum, so if it is copied wrongly the agent says so instead of loading half of it. Instructions have a length limit (about 8,000 characters); when the block grows large, use option 3 and clear the block.
 2. **GitHub (automatic when the sandbox has internet).** At the start of each chat the agent downloads `igppt/assets/lessons.json` from the repository. If your Copilot sandbox can reach GitHub, lessons merged there apply everywhere without touching the agent. If it cannot, the agent says so and uses options 1 and 3.
 3. **The skill itself (permanent).** The owner runs `python tools/merge_lessons.py <block.txt or igppt-lessons.json>`, rebuilds the zips (`python tools/build_zips.py`), and re-uploads `igppt-m365-skill.zip`.

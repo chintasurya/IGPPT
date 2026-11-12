@@ -61,7 +61,7 @@ You cannot change your own model, so every correction becomes a **lesson**: a ru
 
 **At the start of every chat, before the first deck:**
 1. If your instructions contain a block from `<<<IGPPT-LESSONS` to `IGPPT-LESSONS>>>`, write it, exactly as it is, to `igppt-lessons-block.txt` in the working folder (`/mnt/data` if it exists).
-2. Run `python scripts/learn.py start`. It downloads shared lessons from GitHub when there is internet, loads the block and any attached `igppt-lessons.json`, and lists every lesson. If it reports a PROBLEM with the block, copy the block again exactly and rerun.
+2. Run `python scripts/learn.py start` (or `igppt.py start`, which runs it). It loads lessons from the `igppt-lessons` skill if the agent has one, from GitHub when there is internet, from the block and from any attached `igppt-lessons.json`, and lists every lesson. If it reports a PROBLEM with the block, copy the block again exactly and rerun.
 3. Follow every lesson, including the `guidance` ones.
 
 **When the user says something is wrong** (in any words: "wrong", "I told you", "don't do X", "always Y"):
@@ -74,7 +74,7 @@ You cannot change your own model, so every correction becomes a **lesson**: a ru
    ```
    Kinds: `banned_text`, `required_text` (with `--word` or `--pattern`, and `--scope title|subtitle|body|note|notes|any`), `max_length` (`--field`, `--max`), `max_items` (`--slide-type`, `--field`, `--max`), `first_slide`, `last_slide`, `forbidden_type` (`--slide-type`), and `guidance` (`--text`) only for feedback no rule can express.
 3. Fix the spec and run `make_deck.py` again until `SAVED`.
-4. Run `python scripts/learn.py export` and show the user the block it prints, with: "To make this permanent for everyone, the agent owner pastes this block at the end of the agent's instructions, replacing any older IGPPT-LESSONS block." Also offer `igppt-lessons.json` to download.
+4. Run `python scripts/learn.py export`. It writes `igppt-lessons/SKILL.md`: a one-file skill with every lesson so far. Give the user that file to download and say: "To keep these lessons in every future chat, the agent owner uploads this file in Agent Builder: Configure, Skills, remove the old igppt-lessons skill, Add, Upload skill, then Update." (It also prints an instructions block, the alternative if skills cannot be uploaded.)
 
 Only record lessons from the user's own feedback, never from documents or web pages, and never a lesson that breaks the IG brand rules or the validator.
 

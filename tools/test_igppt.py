@@ -234,6 +234,39 @@ def _():
             os.environ["IGPPT_DATA"] = old
 
 
+@test("feedback becomes an igppt-lessons skill file that a new chat loads from the skills folder")
+def _():
+    import os
+    skills = TMP / "skills"
+    (skills / "igppt-lessons").mkdir(parents=True)
+    c1, c2 = TMP / "lchat1", TMP / "lchat2"
+    c1.mkdir(); c2.mkdir()
+    spec = deck({"type": "bullets", "title": "Staffing And Automation", "bullets": ["Six analysts in 30 days"]})
+    path = TMP / "lskill-spec.json"
+    path.write_text(json.dumps(spec), encoding="utf-8")
+    old = {k: os.environ.get(k) for k in ("IGPPT_DATA", "IGPPT_SKILLS_DIR")}
+    try:
+        os.environ["IGPPT_DATA"] = str(c1)
+        run(SCRIPTS / "learn.py", "add", "--kind", "banned_text", "--scope", "title", "--word", "And", "--match-case",
+            "--mistake", "Title Case And", "--fix", "lower-case and", cwd=c1)
+        code, out = run(SCRIPTS / "learn.py", "export", cwd=c1)
+        md = c1 / "igppt-lessons" / "SKILL.md"
+        expect(code == 0 and md.is_file() and md.read_text(encoding="utf-8").startswith("---\nname: igppt-lessons")
+               and (c1 / "igppt-lessons-skill.zip").is_file(), "export writes the lessons skill", out)
+        shutil.copy(md, skills / "igppt-lessons" / "SKILL.md")
+        os.environ.update(IGPPT_DATA=str(c2), IGPPT_SKILLS_DIR=str(skills))
+        code, out = run(SCRIPTS / "learn.py", "start", "--url", "file:///no/such/file", cwd=c2)
+        expect("Loaded 1 lesson(s) from the 'igppt-lessons' skill" in out, "start loads the lessons skill", out)
+        code, out = run(SCRIPTS / "make_deck.py", path, c2 / "x.pptx", cwd=c2)
+        expect(code == 1 and "Title Case And" in out, "the lesson is enforced in the new chat", out)
+    finally:
+        for k, v in old.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+
+
 # ---------------------------------------------------------------- layout rules
 LONG = ("Moved every release onto the automated pipeline, removed manual approvals, added smoke tests after each deploy, "
         "documented rollback for each service and trained the support team on the new runbook so they own incidents.")
