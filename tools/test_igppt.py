@@ -205,6 +205,35 @@ def _():
             os.environ["IGPPT_DATA"] = old
 
 
+@test("igppt.py start / build / verify: one command each, with a check report and a validation stamp")
+def _():
+    import os
+    work = TMP / "agent"
+    work.mkdir()
+    old = os.environ.get("IGPPT_DATA")
+    os.environ["IGPPT_DATA"] = str(work)
+    try:
+        code, out = run(SCRIPTS / "igppt.py", "start", cwd=work)
+        expect(code == 0 and "READY" in out and "igppt.py build" in out, "start should print READY and the commands", out)
+        spec = work / "deck.json"
+        spec.write_text((ROOT / "igppt" / "examples" / "shieldforge-3-slide.json").read_text(encoding="utf-8"), encoding="utf-8")
+        code, out = run(SCRIPTS / "igppt.py", "build", spec, work / "SF.pptx", cwd=work)
+        report = work / "SF - IGPPT check.txt"
+        expect(code == 0 and report.is_file() and "IGPPT validated PASS" in report.read_text(encoding="utf-8"), "build + report", out)
+        code, out = run(SCRIPTS / "igppt.py", "verify", work / "SF.pptx", cwd=work)
+        expect(code == 0 and "Built by IGPPT: yes" in out and "IGPPT validated PASS" in out and "PASS:" in out, "verify good", out)
+        from pptx import Presentation
+        plain = Presentation(); plain.slides.add_slide(plain.slide_layouts[5]).shapes.title.text = "Q3"
+        plain.save(work / "handmade.pptx")
+        code, out = run(SCRIPTS / "igppt.py", "verify", work / "handmade.pptx", cwd=work)
+        expect(code == 1 and "Built by IGPPT: NO" in out, "verify must reject a deck not built by IGPPT", out)
+    finally:
+        if old is None:
+            os.environ.pop("IGPPT_DATA", None)
+        else:
+            os.environ["IGPPT_DATA"] = old
+
+
 # ---------------------------------------------------------------- layout rules
 LONG = ("Moved every release onto the automated pipeline, removed manual approvals, added smoke tests after each deploy, "
         "documented rollback for each service and trained the support team on the new runbook so they own incidents.")

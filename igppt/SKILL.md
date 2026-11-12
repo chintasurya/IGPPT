@@ -21,6 +21,15 @@ python .igppt/igppt/scripts/make_deck.py --help
 
 (If `python` is not found, try `python3`.) Every path below that starts with `scripts/` then means `.igppt/igppt/scripts/`. If the download is blocked (no internet), say so plainly, give the JSON spec, and stop; do not make slides another way.
 
+## Start here: two commands
+
+```bash
+python scripts/igppt.py start                                   # first thing in every chat: set-up check, lessons, exact commands
+python scripts/igppt.py build /mnt/data/deck.json "/mnt/data/<Name>.pptx"   # every deck: build + validate, saves only on PASS
+```
+
+`start` prints the exact build command with full paths for this environment; use it as printed. `build` runs `make_deck.py` (below). On PASS it saves the deck, stamps it as validated, and writes `<Name> - IGPPT check.txt`: deliver both files. `python scripts/igppt.py verify <file>.pptx` answers "was this deck validated?".
+
 ## Required: one command builds and validates every deck
 
 These rules override any general habit of writing slide code:

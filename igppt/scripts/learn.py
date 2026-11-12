@@ -404,7 +404,7 @@ def cmd_sync(args):
         with urllib.request.urlopen(url, timeout=8) as r:
             data = json.loads(r.read().decode("utf-8"))
     except Exception as e:  # no internet in many sandboxes: say so and carry on
-        print(f"Shared lessons not downloaded ({type(e).__name__}); using the lessons in the skill and the instructions.")
+        print(f"Shared lessons not downloaded ({type(e).__name__}: {str(e)[:80]}); using the lessons in the skill and the instructions.")
         return 0
     items = [l for l in (data.get("lessons", []) if isinstance(data, dict) else data) if isinstance(l, dict) and valid(l)]
     target = data_dir() / "igppt-lessons-shared.json"

@@ -101,6 +101,7 @@
   "igppt/scripts/ig_kit.py",
   "igppt/scripts/ig_metrics.py",
   "igppt/scripts/ig_text.py",
+  "igppt/scripts/igppt.py",
   "igppt/scripts/init.py",
   "igppt/scripts/learn.py",
   "igppt/scripts/make_deck.py",

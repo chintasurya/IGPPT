@@ -14,7 +14,8 @@ It follows the open Agent Skills format (a folder with `SKILL.md`), so the same 
 | `igppt/references/deck-recipes.md` | Storylines for common deck requests |
 | `igppt/references/spec-format.md` | Every slide type and field |
 | `igppt/references/ig-brand.md` | IG layouts, colours, fonts, icons |
-| `igppt/scripts/make_deck.py` | The one command: checks and fixes the spec, builds, validates, saves only on PASS |
+| `igppt/scripts/igppt.py` | What agents run: `start` (set-up check, lessons, exact commands), `build` (deck + check report), `verify` |
+| `igppt/scripts/make_deck.py` | Checks and fixes the spec, builds, validates, saves only on PASS, stamps the deck and writes the check report |
 | `igppt/scripts/validate.py` | Validates a deck: template, fonts, colours, fit, overlap, spacing, dashes, spelling |
 | `igppt/scripts/build_deck.py` | Builds a deck from a JSON spec (used by `make_deck.py`) |
 | `igppt/scripts/ig_kit.py` | Library behind it, for custom slides |

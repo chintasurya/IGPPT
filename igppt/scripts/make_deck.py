@@ -8,12 +8,14 @@ This is the one command to use. It:
   3. builds a draft on the IG template with build_deck.py,
   4. validates the draft with validate.py (template, fonts, colours, overflow, overlap, spacing, dashes, spelling)
      and checks every lesson learned from feedback (learn.py),
-  5. saves out.pptx ONLY if everything passes. On FAIL nothing is saved: each problem names the spec field
+  5. saves out.pptx ONLY if everything passes, stamps it ("IGPPT validated PASS ..." in the file properties) and
+     writes "<name> - IGPPT check.txt" next to it. On FAIL nothing is saved: each problem names the spec field
      to change. Change the spec and run the same command again.
 
 Exit code 0 = PASS (deck saved), 1 = FAIL (deck not saved), 2 = the spec could not be read.
 Words the spell check does not know (client or product names) go in igppt-words.txt next to the spec.
 """
+import datetime as dt
 import json
 import os
 import sys
@@ -149,8 +151,22 @@ def main():
                 print(f"Removed the older {out.name} so an out-of-date deck cannot be delivered by mistake.")
         print(f"NOT SAVED: {out}. Change {spec_path.name} as listed above and run the same command again.")
         sys.exit(1)
+    # stamp the deck and write the check report, so anyone can see this deck was validated
+    stamp = (f"IGPPT validated PASS {dt.datetime.now():%Y-%m-%d %H:%M}; {n} slides; "
+             f"{len(checked)} lesson rule(s); {len(report.items)} warning(s)")
+    prs = V.Presentation(str(draft))
+    prs.core_properties.comments = stamp
+    prs.save(str(draft))
     os.replace(draft, out)
+    check_file = out.with_name(out.stem + " - IGPPT check.txt")
+    with open(check_file, "w", encoding="utf-8") as fh:
+        fh.write(f"{stamp}\nDeck: {out.name}\nSpec: {spec_path.name}\n\n")
+        V.print_report(report, n, out=fh)
+        if lessons:
+            fh.write(f"\nLessons in force: {len(lessons)}\n" + "".join(
+                f"  {l.get('id')}: {l.get('mistake') or l.get('text')}\n" for l in lessons))
     print(f"SAVED: {out} ({n} slides)")
+    print(f"CHECK REPORT: {check_file} (deliver it with the deck)")
     if preview:
         import subprocess
         r = subprocess.run([sys.executable, str(Path(__file__).with_name("render_preview.py")), str(out), preview])
