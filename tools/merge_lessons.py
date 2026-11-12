@@ -1,6 +1,8 @@
-"""Make lessons permanent: merge downloaded igppt-lessons.json files into the skill, for everyone.
+"""Make lessons permanent: merge lessons into the skill itself, for everyone.
 
-    python tools/merge_lessons.py igppt-lessons.json [more.json ...] [--dry-run]
+    python tools/merge_lessons.py igppt-lessons.json [block.txt ...] [--dry-run]
+
+Accepts igppt-lessons.json files and text files containing a lessons block (from `learn.py export`).
 
 Users of the Microsoft 365 or ChatGPT agent download igppt-lessons.json after giving feedback and send it to
 the IGPPT owner. This adds those lessons to igppt/assets/lessons.json (duplicates are skipped), shows each one
@@ -28,8 +30,20 @@ def main():
     seen = {learn.signature(l) for l in current}
     sample = json.loads((ROOT / "igppt" / "examples" / "sample-deck.json").read_text(encoding="utf-8"))
     added = []
+    def lessons_in(f):
+        text = Path(f).read_text(encoding="utf-8-sig", errors="replace")
+        blocks = learn.parse_blocks(text)
+        if blocks:
+            for items, problem in blocks:
+                if problem:
+                    print(f"SKIP block in {f}: {problem}")
+                else:
+                    yield from items
+        else:
+            yield from learn.read_file(f)
+
     for f in files:
-        for l in learn.read_file(f):
+        for l in lessons_in(f):
             if learn.signature(l) in seen or l.get("kind") not in learn.KINDS:
                 continue
             seen.add(learn.signature(l))

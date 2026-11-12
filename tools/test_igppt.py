@@ -170,6 +170,41 @@ def _():
         lessons.unlink(missing_ok=True)
 
 
+@test("lessons survive into a new chat through the instructions block, and a damaged block is rejected")
+def _():
+    import os
+    chat1, chat2, chat3 = TMP / "chat1", TMP / "chat2", TMP / "chat3"
+    for c in (chat1, chat2, chat3):
+        c.mkdir()
+    spec = deck({"type": "bullets", "title": "Staffing And Automation", "bullets": ["Six analysts in 30 days"]})
+    path = TMP / "chat-spec.json"
+    path.write_text(json.dumps(spec), encoding="utf-8")
+    old = os.environ.get("IGPPT_DATA")
+    try:
+        os.environ["IGPPT_DATA"] = str(chat1)
+        code, out = run(SCRIPTS / "learn.py", "add", "--kind", "banned_text", "--scope", "title", "--word", "And", "--match-case",
+                        "--mistake", "Title Case And", "--fix", "lower-case and", "--spec", path, cwd=chat1)
+        expect(code == 0 and "It catches" in out, "learn in chat 1", out)
+        code, out = run(SCRIPTS / "learn.py", "export", cwd=chat1)
+        block = out[out.index("<<<IGPPT-LESSONS"):out.index("IGPPT-LESSONS>>>") + len("IGPPT-LESSONS>>>")]
+        expect("\\" not in block, "a --word lesson has no backslashes to mis-copy", block)
+        os.environ["IGPPT_DATA"] = str(chat2)
+        (chat2 / "igppt-lessons-block.txt").write_text("Instructions...\n" + block + "\n", encoding="utf-8")
+        code, out = run(SCRIPTS / "learn.py", "start", "--url", (ROOT / "igppt" / "assets" / "lessons.json").as_uri(), cwd=chat2)
+        expect(code == 0 and "Loaded 1 lesson" in out and "Shared lessons downloaded: 0" in out, "start loads the block and syncs", out)
+        code, out = run(SCRIPTS / "make_deck.py", path, chat2 / "x.pptx", cwd=chat2)
+        expect(code == 1 and "Title Case And" in out, "the lesson blocks the mistake in a new chat", out)
+        os.environ["IGPPT_DATA"] = str(chat3)
+        (chat3 / "igppt-lessons-block.txt").write_text(block.replace("lower-case", "lowercase"), encoding="utf-8")
+        code, out = run(SCRIPTS / "learn.py", "start", "--url", "file:///no/such/file", cwd=chat3)
+        expect("checksum does not match" in out and "Loaded 0 lesson" in out and "not downloaded" in out, "damaged block", out)
+    finally:
+        if old is None:
+            os.environ.pop("IGPPT_DATA", None)
+        else:
+            os.environ["IGPPT_DATA"] = old
+
+
 # ---------------------------------------------------------------- layout rules
 LONG = ("Moved every release onto the automated pipeline, removed manual approvals, added smoke tests after each deploy, "
         "documented rollback for each service and trained the support team on the new runbook so they own incidents.")

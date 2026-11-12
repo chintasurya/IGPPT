@@ -42,9 +42,10 @@ How to make a deck:
 6. Give the user the saved .pptx to download, the slide list, and any assumptions or [placeholders] to confirm.
 
 Learning from feedback:
-- Before every deck, run: python <igppt skill folder>/scripts/learn.py list, and follow every lesson.
-- If the user attached igppt-lessons.json, copy it to /mnt/data/igppt-lessons.json first.
-- When the user says something is wrong, record a lesson with learn.py add (see SKILL.md, "Learning from feedback"), fix the spec, rebuild until SAVED, and give the user /mnt/data/igppt-lessons.json to download so the lesson can be used in future chats.
+- At the start of every chat, before the first deck: write the IGPPT-LESSONS block at the end of these instructions (if there is one), exactly as it is, to /mnt/data/igppt-lessons-block.txt, then run: python <igppt skill folder>/scripts/learn.py start. Follow every lesson it lists. If it reports a PROBLEM with the block, copy the block again exactly.
+- When the user says something is wrong, record a lesson with learn.py add (see the skill's SKILL.md, "Learning from feedback"), fix the spec and rebuild until SAVED. Then run learn.py export and show the user the block, so the agent owner can paste it here.
+
+(Lessons block: the agent owner pastes the latest block from learn.py export below this line, replacing the old one.)
 
 Never:
 - write your own python-pptx, pptxgenjs, HTML or Office code to make slides
@@ -71,11 +72,17 @@ If you see it running a script called `main.py`, or slides with a plain black ba
 
 ## Updating later
 
-### Making lessons permanent
+### Making lessons last across chats
 
-Lessons the agent learns from feedback last for the chat they were learned in. Each time, the agent offers `igppt-lessons.json` to download. To make lessons permanent for everyone:
-- **Quick:** attach `igppt-lessons.json` to your next chat; the agent loads it.
-- **Permanent:** send the file to the IGPPT owner, who runs `python tools/merge_lessons.py igppt-lessons.json`, rebuilds the zips and re-uploads `igppt-m365-skill.zip`. From then on every chat for every user checks those lessons.
+Microsoft 365 Copilot wipes the agent's working folder after each chat, so a lesson is kept in one of these places:
+
+1. **The agent's instructions (recommended; about a minute, no re-upload).** After learning, the agent shows a block that starts with `<<<IGPPT-LESSONS` and ends with `IGPPT-LESSONS>>>`. The agent owner opens the agent, **Edit**, **Configure**, and pastes the block at the very end of **Instructions**, replacing the previous block (the newest block always contains every lesson learned in that chat plus those it loaded). Select **Update**. Every new chat, for every user, loads it. The block has a count and checksum, so if it is copied wrongly the agent says so instead of loading half of it. Instructions have a length limit (about 8,000 characters); when the block grows large, use option 3 and clear the block.
+2. **GitHub (automatic when the sandbox has internet).** At the start of each chat the agent downloads `igppt/assets/lessons.json` from the repository. If your Copilot sandbox can reach GitHub, lessons merged there apply everywhere without touching the agent. If it cannot, the agent says so and uses options 1 and 3.
+3. **The skill itself (permanent).** The owner runs `python tools/merge_lessons.py <block.txt or igppt-lessons.json>`, rebuilds the zips (`python tools/build_zips.py`), and re-uploads `igppt-m365-skill.zip`.
+
+A user can also attach `igppt-lessons.json` (or a text file with a block) to a chat; it is loaded for that chat.
+
+Fully automatic sharing (the agent saving lessons to SharePoint for everyone by itself) needs a Copilot Studio agent with a Power Automate flow; Agent Builder agents cannot write files outside the chat.
 
 When IGPPT changes, download the new `igppt-m365-skill.zip`, edit the agent, remove the old igppt skill, upload the new zip, and select **Update**. Everyone the agent is shared with gets the new version. Do the same in the Proposal Review agent, which also uses the igppt skill.
 
