@@ -27,6 +27,8 @@ It follows the open Agent Skills format (a folder with `SKILL.md`), so the same 
 | `igppt/scripts/deck_text.py` | Reads an existing deck's text |
 | `igppt/assets/ig-template.pptx` | The IG template (layouts only) |
 | `igppt/examples/sample-deck.json` | A 13-slide example using every main slide type |
+| `igppt/examples/project-spotlight-*.json` | Project Spotlight specs: blank template and a filled, fictional sample |
+| `templates/project-spotlight/` | Project Spotlight master deck (`.pptx`), filled sample and a guide for PMs |
 | `copilot/agents/igppt.agent.md` | "IGPPT" custom agent for Copilot |
 | `chatgpt/GPT-instructions.md` | Set-up and instructions for a ChatGPT custom GPT |
 | `chatgpt/igppt-skill.zip` | The skill packed for upload to a custom GPT |

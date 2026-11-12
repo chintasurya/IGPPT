@@ -74,7 +74,7 @@ Warnings (the deck is still saved, but read them): unknown words such as names, 
 | overflows / crosses / touches the edge / runs into the footer | Cut the characters it suggests, move points to a new slide, or remove the `note` |
 | title wraps / title shrank | A title of 45 characters or fewer |
 | word is too wide | A shorter word (for example in `owner` or `tag`), or fewer steps or cards per slide |
-| were dropped | Split into two slides (at most: agenda 7, cards 6, stats 4, steps 6, milestones 7, people 8) |
+| were dropped | Split into two slides (at most: agenda 7, cards 6, stats 4, steps 6, milestones 7, people 8; snapshot 5 tiles and 6 cards) |
 | em dash / en dash | Fixed automatically by `make_deck.py`; otherwise use a comma, colon or hyphen |
 | spelling: 'x' (did you mean 'y'?) | Correct the word |
 | unknown word 'Name' (warning) | If it is a correct name or product, add it to `igppt-words.txt` next to the spec (one per line). Never add a misspelling to make a check pass |
@@ -83,9 +83,9 @@ Warnings (the deck is still saved, but read them): unknown words such as names, 
 ## Workflow
 
 1. **Understand the request.** Pull out: purpose, audience, decision or action wanted, length, deadline, and any data, notes or files supplied. Requests from chat or email are often short; fill gaps with sensible defaults rather than asking, and list what you assumed.
-2. **Pick a recipe** from `references/deck-recipes.md` (status update or quarterly review, proposal, kickoff, QBR, training, demo, pitch, all-hands, one-pager). Default length: 6 to 10 slides.
+2. **Pick a recipe** from `references/deck-recipes.md` (status update or quarterly review, proposal, kickoff, QBR, training, demo, pitch, all-hands, one-pager, project spotlight). Default length: 6 to 10 slides.
 3. **Write the storyline**: one message per slide, written as the slide title (a takeaway such as "Ticket Volume Is Falling", not a topic such as "Tickets"). Titles of 45 characters or fewer.
-4. **Write the spec.** Choose the slide type that shows each message best (numbers → `stats`, steps → `process`, dates → `timeline`, options → `comparison` or `cards`, data series → `chart`, detail → `table`). Vary types; avoid more than two `bullets` slides in a row. Put sources and assumptions in a `note`. Put talking points in `notes`.
+4. **Write the spec.** Choose the slide type that shows each message best (numbers → `stats`, steps → `process`, dates → `timeline`, options → `comparison` or `cards`, data series → `chart`, detail → `table`, a whole project on one page → `snapshot`). Vary types; avoid more than two `bullets` slides in a row. Put sources and assumptions in a `note`. Put talking points in `notes`.
 5. **Build and validate** with `python scripts/make_deck.py deck.json <name>.pptx`. On `FAIL`, fix the spec as the table above says and run it again, until it prints `SAVED`.
 6. **Review.** Read the warnings and fix what you can. Add `--preview previews/` when LibreOffice is available and look at every image. Then apply the content rules below.
 7. **Deliver** the `.pptx` with a short reply: what the deck covers, the slide list, and any assumptions, `[placeholders]` or unknown names the requester must confirm.

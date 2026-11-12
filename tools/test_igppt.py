@@ -66,6 +66,26 @@ def _():
     expect(code == 0, "light sample should pass", out)
 
 
+@test("project spotlight template and sample build and pass")
+def _():
+    for name in ("project-spotlight-template", "project-spotlight-sample"):
+        spec = ROOT / "igppt" / "examples" / f"{name}.json"
+        code, out = run(SCRIPTS / "make_deck.py", spec, TMP / f"{name}.pptx", "--no-fix")
+        expect(code == 0 and "SAVED" in out, f"{name} should pass", out)
+
+
+@test("snapshot fails when tags or cards would be dropped")
+def _():
+    code, out, _ = make(deck({"type": "snapshot", "title": "Project Snapshot", "subtitle": "Client | Practice",
+                              "stats": [{"value": "8", "label": "Team size"}],
+                              "cards": [{"title": "Technologies", "chips": [f"Platform {k}" for k in range(30)]}] +
+                                       [{"title": f"Card {k}", "text": "Short text."} for k in range(5)]}), "chips")
+    expect(code == 1 and "did not fit" in out, "overflowing tags must fail", out)
+    code, out, _ = make(deck({"type": "snapshot", "title": "Project Snapshot",
+                              "cards": [{"title": f"Card {k}", "text": "Short text."} for k in range(7)]}), "snapcards")
+    expect(code == 1 and "were dropped" in out, "a seventh card must fail", out)
+
+
 @test("every slide type passes with ordinary content")
 def _():
     spec = json.loads(SAMPLE.read_text(encoding="utf-8"))

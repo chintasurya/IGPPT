@@ -24,12 +24,12 @@ import ig_text  # noqa: E402
 import validate as V  # noqa: E402
 
 TEXT_SKIP = {"type", "color", "icon", "theme", "background", "image", "style", "number_format"}
-CONTENT = {"bullets", "cards", "stats", "process", "timeline", "table", "chart", "comparison", "image", "team"}
+CONTENT = {"bullets", "cards", "stats", "process", "timeline", "table", "chart", "comparison", "image", "team", "snapshot"}
 REQUIRED = {"title": ["title"], "section": ["title"], "statement": ["text"], "quote": ["text"], "agenda": ["items"],
             "bullets": ["title", "bullets"], "cards": ["title", "cards"], "stats": ["title", "stats"],
             "process": ["title", "steps"], "timeline": ["title", "milestones"], "table": ["title", "rows"],
             "chart": ["title", "chart"], "comparison": ["title", "left", "right"], "image": ["title", "image"],
-            "team": ["title", "members"], "closing": []}
+            "team": ["title", "members"], "snapshot": ["title"], "closing": []}
 
 
 def fix_spec(node, path="", changes=None):

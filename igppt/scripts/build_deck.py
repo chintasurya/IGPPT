@@ -19,8 +19,9 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import ig_metrics  # noqa: E402
 from ig_kit import (ACCENTS, BOTTOM, DARK, LEFT, NAVY, RIGHT, WIDTH,  # noqa: E402
-                    Deck, columns, fit_size, icon_names, text_height)
+                    Deck, columns, fit_size, icon_names, one_line_size, text_height)
 
 WARNINGS = []      # (slide, message, fatal): fatal means content was lost, so the deck must not be delivered
 
@@ -302,10 +303,112 @@ def s_team(deck, s, i):
             c.text(x + 0.25, y + 1.12, w - 0.5, h - 1.25, p["text"], fit=(14, 9), color=c.t.muted)
 
 
+def bullet_fit(items, w, h, max_size, min_size, gap=6):
+    """Largest size at which a bullet list fits w x h without splitting a word (same measure as Canvas.bullets)."""
+    flat = []
+    for it in items:
+        if isinstance(it, dict):
+            flat.append((it["text"], 0)); flat += [(s_, 1) for s_ in it.get("sub", [])]
+        else:
+            flat.append((str(it), 0))
+    size = max_size
+    while size > min_size:
+        m = ig_metrics.measure([{"runs": [(f, size - 2 * lvl, "regular", 0.0)], "indent": 0.28 + 0.3 * lvl, "after": gap}
+                                for f, lvl in flat], w)
+        if m["height"] <= h and not m["split_words"]:
+            break
+        size -= 0.5
+    return size
+
+
+def pills(c, x, y, w, h, words, size=10):
+    """Wrapping row of pill tags (e.g. technologies) inside a w x h box. Returns the number that did not fit."""
+    pill_h, gap, pad = 0.3, 0.1, 0.13
+    cx, cy = x, y
+    for k, word in enumerate(words):
+        pw = min(w, ig_metrics.text_width(word, size) + 2 * pad + 0.04)
+        if cx > x and cx + pw > x + w:
+            cx, cy = x, cy + pill_h + gap
+        if cy + pill_h > y + h:
+            return len(words) - k
+        sh = c.card(cx, cy, pw, pill_h, fill=c.t.chip_fill, border="4A515C" if c.t is DARK else c.t.line, radius=pill_h / 2)
+        sh.adjustments[0] = 0.5
+        c.text(cx, cy, pw, pill_h, word, size=size, align="center", valign="middle")
+        cx += pw + gap
+    return 0
+
+
+def s_snapshot(deck, s, i):
+    """One-page summary: a row of up to 5 number tiles above up to 6 cards (bullets, text or pill tags)."""
+    c = content(deck, s, i)
+    bottom = note_band(c, s["note"]) if s.get("note") else BOTTOM
+    stats, cards = s.get("stats", []), s.get("cards", [])
+    if len(stats) > 5:
+        warn(i, f"snapshot shows at most 5 tiles; {len(stats) - 5} were dropped: merge tiles", fatal=True)
+    if len(cards) > 6:
+        warn(i, f"snapshot shows at most 6 cards; {len(cards) - 6} were dropped: split the slide", fatal=True)
+    stats, cards = stats[:5], cards[:6]
+    y = c.top
+    if stats:
+        w, xs = columns(len(stats))
+        h = 1.14
+        for k, (x, st) in enumerate(zip(xs, stats)):
+            col = color_of(st, k)
+            c.card(x, y, w, h, border=col if st.get("highlight") else None)
+            v = str(st.get("value", ""))
+            c.text(x + 0.22, y + 0.07, w - 0.44, 0.46, v, size=one_line_size(v, w - 0.44, 26, 14), color=c.t.accent(col),
+                   light=True, valign="middle")
+            lab = st.get("label", "")
+            c.text(x + 0.22, y + 0.58, w - 0.44, 0.24, lab, size=one_line_size(lab, w - 0.44, 11.5, 9, bold=True), bold=True)
+            if st.get("text"):
+                c.text(x + 0.22, y + 0.87, w - 0.44, 0.2, st["text"], size=one_line_size(st["text"], w - 0.44, 9.5, 8),
+                       color=c.t.muted)
+        y += h + 0.2
+    if not cards:
+        return
+    per_row = 2 if len(cards) in (2, 4) else min(3, len(cards))
+    rows = math.ceil(len(cards) / per_row)
+    w, xs = columns(per_row)
+    h = (bottom - y - 0.2 * (rows - 1)) / rows
+    # one body size for every card, so the cards read as a set
+    size = 12.0
+    for card in cards:
+        if card.get("bullets"):
+            size = min(size, bullet_fit(card["bullets"], w - 0.44, h - 0.84, 12, 9, gap=3))
+        elif card.get("text"):
+            size = min(size, fit_size(card["text"], w - 0.44, h - 0.84, 12, 9))
+    for k, card in enumerate(cards):
+        x, yy = xs[k % per_row], y + (k // per_row) * (h + 0.2)
+        col = color_of(card, k)
+        c.card(x, yy, w, h, border=col if card.get("highlight") else None)
+        icon = card.get("icon")
+        if icon and icon not in icon_names():
+            warn(i, f"unknown icon '{icon}', used a number instead"); icon = None
+        if icon:
+            c.icon_circle(x + 0.22, yy + 0.18, 0.42, col, icon)
+        else:
+            c.oval(x + 0.22, yy + 0.18, 0.42, fill=col, text=str(k + 1), text_size=13)
+        tag_w = 1.0 if card.get("tag") else 0
+        if tag_w:
+            c.chip(x + w - tag_w - 0.22, yy + 0.25, tag_w, card["tag"], col)
+        title = card.get("title", "")
+        tw = w - 0.8 - 0.22 - (tag_w + 0.15 if tag_w else 0)
+        c.text(x + 0.8, yy + 0.18, tw, 0.42, title, size=one_line_size(title, tw, 14, 10.5, bold=True), bold=True, valign="middle")
+        by, bh = yy + 0.7, h - 0.7 - 0.14
+        if card.get("chips"):
+            left = pills(c, x + 0.22, by, w - 0.44, bh, card["chips"])
+            if left:
+                warn(i, f"{left} tag(s) did not fit in card {k + 1}: use fewer or shorter tags", fatal=True)
+        elif card.get("bullets"):
+            c.bullets(x + 0.22, by, w - 0.44, bh, card["bullets"], size=size, color=c.t.muted, gap=3)
+        elif card.get("text"):
+            c.text(x + 0.22, by, w - 0.44, bh, card["text"], size=size, color=c.t.muted)
+
+
 TYPES = {"title": s_title, "agenda": s_agenda, "section": s_section, "statement": s_statement, "quote": s_statement,
          "closing": s_closing, "bullets": s_bullets, "cards": s_cards, "stats": s_stats, "process": s_process,
          "timeline": s_timeline, "table": s_table, "chart": s_chart, "comparison": s_comparison, "image": s_image,
-         "team": s_team}
+         "team": s_team, "snapshot": s_snapshot}
 
 
 def build(spec, out, base=Path("."), theme=None):

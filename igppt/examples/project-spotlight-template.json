@@ -1,0 +1,326 @@
+{
+  "theme": "dark",
+  "slides": [
+    {
+      "type": "title",
+      "title": "Project Spotlight: [Project Name]",
+      "subtitle": "[Client or sector] | [Practice] practice",
+      "date": "[Month Year]",
+      "notes": "Replace the project name, client (or sector, if the deck may travel outside the account), practice and month."
+    },
+    {
+      "type": "bullets",
+      "title": "How to Use This Template",
+      "eyebrow": "Read me, then delete this slide",
+      "bullets": [
+        "Main deck: copy slide 3 (the one-page snapshot), one per project",
+        "Own presentation: keep slides 3 to 12 and fill them in",
+        "Replace every [square-bracket] placeholder and remove the brackets",
+        "Keep each title on one line, 45 characters or fewer",
+        "Check the numbers agree: ACV x contract years = TCV",
+        "Guidance for every field is in the speaker notes"
+      ],
+      "callout": {
+        "value": "1",
+        "label": "Slide per project",
+        "text": "The snapshot on slide 3 is the slide for the main deck."
+      },
+      "notes": "Delete this slide before sharing. Prefer the IGPPT assistant? Give it the spec igppt/examples/project-spotlight-template.json with your project details."
+    },
+    {
+      "type": "snapshot",
+      "title": "[Project Name]: [Headline Outcome]",
+      "eyebrow": "Project Spotlight",
+      "subtitle": "[Client or sector] | [Practice] practice | PM: [Name] | [Start month year] to [End month year]",
+      "stats": [
+        {
+          "value": "[Practice]",
+          "label": "Practice",
+          "text": "[Sub-practice or offering]"
+        },
+        {
+          "value": "[X] FTE",
+          "label": "Team size",
+          "text": "[Onshore / offshore split]"
+        },
+        {
+          "value": "[X] mo",
+          "label": "Project length",
+          "text": "[Start] to [end]"
+        },
+        {
+          "value": "$[X.X]M",
+          "label": "ACV",
+          "text": "Annual contract value"
+        },
+        {
+          "value": "$[X.X]M",
+          "label": "TCV",
+          "text": "Total value over [X] years"
+        }
+      ],
+      "cards": [
+        {
+          "icon": "warning",
+          "title": "Customer Problem",
+          "highlight": true,
+          "bullets": [
+            "[What was broken, slow or costly]",
+            "[Who it hurt and how much]",
+            "[Why it mattered now]"
+          ]
+        },
+        {
+          "icon": "route",
+          "title": "Scope",
+          "bullets": [
+            "In: [main deliverable]",
+            "In: [second deliverable]",
+            "Out: [what we are not doing]"
+          ]
+        },
+        {
+          "icon": "code",
+          "title": "Technologies",
+          "chips": [
+            "[Cloud]",
+            "[Language]",
+            "[Framework]",
+            "[Data / AI]",
+            "[DevOps]",
+            "[Tool]"
+          ]
+        },
+        {
+          "icon": "search",
+          "title": "How We Found the Need",
+          "bullets": [
+            "[Trigger: account review, RFP, client ask]",
+            "[Discovery: interviews, workshops, data]",
+            "[Who signed off the business case]"
+          ]
+        },
+        {
+          "icon": "clipboard-check",
+          "title": "Deal of Delivery",
+          "tag": "DOD",
+          "bullets": [
+            "[Created? Yes / No, and when]",
+            "[What it commits: deliverables, milestones]",
+            "[Who agreed it, where it is stored]"
+          ]
+        },
+        {
+          "icon": "chart",
+          "title": "Outcomes",
+          "tag": "Optional",
+          "bullets": [
+            "[Result 1 with a number]",
+            "[Result 2 with a number]",
+            "[Client feedback or next phase]"
+          ]
+        }
+      ],
+      "notes": "THE SLIDE FOR THE MAIN DECK. Title: project name and the result in a few words, 45 characters or fewer. Subtitle: client (or sector), practice, PM, dates. Practice: the official IG practice name. Team size: peak FTE, with onshore / offshore split. Project length: months, with start and end month. ACV: annual contract value. TCV: total contract value over the full term; for a flat contract ACV x years = TCV. Customer Problem: the client's pain in their terms, ideally with a number. Scope: what is in, and at least one thing that is out. Technologies: up to 6 named platforms, languages or tools, one per tag. How We Found the Need: what triggered it, how discovery was done, who approved it. Deal of Delivery (DOD): whether one was created and when, what it commits to, who agreed it and where it is kept; write 'Not created' if there is none. Outcomes: optional; measured results so far, or delete the card's text and write 'In progress'."
+    },
+    {
+      "type": "section",
+      "title": "Deep Dive: [Project Name]",
+      "notes": "Slides 5 to 12 are optional: use them when you present your own project."
+    },
+    {
+      "type": "stats",
+      "title": "Engagement at a Glance",
+      "eyebrow": "Overview",
+      "subtitle": "[Client or sector] | [Practice] practice | PM: [Name]",
+      "stats": [
+        {
+          "value": "[X]",
+          "label": "Team size (FTE)",
+          "text": "[Roles and onshore / offshore split]"
+        },
+        {
+          "value": "[X] mo",
+          "label": "Project length",
+          "text": "[Start month year] to [end month year]"
+        },
+        {
+          "value": "$[X.X]M",
+          "label": "ACV",
+          "text": "Annual contract value"
+        },
+        {
+          "value": "$[X.X]M",
+          "label": "TCV",
+          "text": "Total contract value over [X] years"
+        }
+      ],
+      "note": "Check: ACV x contract years = TCV for a flat contract. Mark any figure that is an estimate.",
+      "notes": "Use the same numbers as the snapshot slide. If the contract is not flat (for example a ramp-up year), say so in the note band."
+    },
+    {
+      "type": "comparison",
+      "title": "The Customer Problem",
+      "eyebrow": "Why",
+      "left": {
+        "tag": "Before",
+        "heading": "[The pain in one line]",
+        "points": [
+          "[What was broken, slow or costly]",
+          "[Who it hurt, with a number]",
+          "[What it cost the client]"
+        ]
+      },
+      "right": {
+        "tag": "After",
+        "heading": "[The target state in one line]",
+        "points": [
+          "[What changes for users]",
+          "[The measure that improves]",
+          "[Why it matters to the business]"
+        ],
+        "highlight": true
+      },
+      "notes": "Write the problem in the client's terms. Back it with their data where you can."
+    },
+    {
+      "type": "comparison",
+      "title": "What Is in Scope",
+      "eyebrow": "Scope",
+      "left": {
+        "tag": "In scope",
+        "heading": "[What we deliver]",
+        "points": [
+          "[Deliverable 1]",
+          "[Deliverable 2]",
+          "[Deliverable 3]"
+        ],
+        "color": "green",
+        "highlight": true
+      },
+      "right": {
+        "tag": "Out of scope",
+        "heading": "[What we do not deliver]",
+        "points": [
+          "[Exclusion 1]",
+          "[Exclusion 2]",
+          "[Owned by the client or another vendor]"
+        ],
+        "color": "magenta"
+      },
+      "notes": "Always list at least one thing that is out of scope; it prevents scope creep later."
+    },
+    {
+      "type": "cards",
+      "title": "Technologies We Use",
+      "eyebrow": "Technology",
+      "grid": true,
+      "cards": [
+        {
+          "icon": "database",
+          "title": "Cloud and platform",
+          "text": "[For example: Azure, AWS, Salesforce, ServiceNow]"
+        },
+        {
+          "icon": "code",
+          "title": "Application",
+          "text": "[Languages and frameworks, for example .NET, Java, React]"
+        },
+        {
+          "icon": "chart",
+          "title": "Data and AI",
+          "text": "[For example: Databricks, Snowflake, Power BI, Azure OpenAI]"
+        },
+        {
+          "icon": "tools",
+          "title": "DevOps and tooling",
+          "text": "[For example: Azure DevOps, GitHub, Jira, Terraform]"
+        }
+      ],
+      "notes": "Name real products and versions. Delete a card if the project does not use that layer."
+    },
+    {
+      "type": "process",
+      "title": "How We Identified the Need",
+      "eyebrow": "Need",
+      "steps": [
+        {
+          "title": "Trigger",
+          "owner": "[Who]",
+          "text": "[Account review, RFP, client request or incident]",
+          "icon": "flag"
+        },
+        {
+          "title": "Discovery",
+          "owner": "[Who]",
+          "text": "[Interviews, workshops, data analysis; how long]",
+          "icon": "search"
+        },
+        {
+          "title": "Business case",
+          "owner": "[Who]",
+          "text": "[The value or saving that justified the work]",
+          "icon": "dollar"
+        },
+        {
+          "title": "Approval",
+          "owner": "[Who]",
+          "text": "[Who signed off, and when]",
+          "icon": "check-circle"
+        }
+      ],
+      "highlight": 1,
+      "bullets": [
+        "[What discovery found that the client did not expect]",
+        "[How the finding shaped the scope]"
+      ],
+      "notes": "Show how the need was found, not just that it existed. Name the client role that approved it."
+    },
+    {
+      "type": "bullets",
+      "title": "Deal of Delivery",
+      "eyebrow": "DOD",
+      "bullets": [
+        "Deliverables committed: [list]",
+        "Milestones and dates: [list]",
+        "Agreed by: [client role] and [IG role]",
+        "Stored at: [location of the DOD document]",
+        "Changes since signing: [none, or what changed and why]"
+      ],
+      "callout": {
+        "value": "[Yes / No]",
+        "label": "DOD created",
+        "text": "[Month year it was agreed]"
+      },
+      "notes": "If no DOD was created, write No in the callout and say why, and what is used instead."
+    },
+    {
+      "type": "stats",
+      "title": "Outcomes So Far",
+      "eyebrow": "Optional",
+      "stats": [
+        {
+          "value": "[XX%]",
+          "label": "[Measure 1]",
+          "text": "[From what, to what]"
+        },
+        {
+          "value": "[XX]",
+          "label": "[Measure 2]",
+          "text": "[From what, to what]"
+        },
+        {
+          "value": "[X.X/5]",
+          "label": "Client satisfaction",
+          "text": "[Source of the score]"
+        }
+      ],
+      "note": "Source: [where the numbers come from, and the period they cover].",
+      "notes": "Optional. Only use measured results; label estimates. Delete this slide if the project is too early to show results."
+    },
+    {
+      "type": "closing",
+      "style": "thank-you"
+    }
+  ]
+}

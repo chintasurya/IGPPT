@@ -35,6 +35,21 @@ Before sizing a team, compare demand with capacity: tickets x handling time + en
 ## Project kickoff (6 to 9 slides)
 title, statement (why this project), cards (objectives), process (approach/phases), timeline (milestones), team (who does what), table (ways of working: meetings, tools, reporting), bullets (risks and dependencies), closing
 
+## Project spotlight (1 slide, or 10 to 12 for a deep dive)
+For a PM presenting a project, or one slide per project in a portfolio deck. Start from `examples/project-spotlight-template.json` (blank, with field guidance in the speaker notes) or `examples/project-spotlight-sample.json` (filled, fictional).
+1. title
+2. snapshot: the one-page slide. Tiles: practice, team size, project length, ACV, TCV. Cards: customer problem, scope, technologies (chips), how we found the need, Deal of Delivery (DOD), outcomes (optional)
+3. section: deep dive
+4. stats: engagement at a glance (team size, length, ACV, TCV; check ACV x years = TCV)
+5. comparison: the customer problem, before vs after
+6. comparison: in scope vs out of scope
+7. cards: technologies by layer (cloud, application, data and AI, DevOps)
+8. process: how we identified the need (trigger, discovery, business case, approval)
+9. bullets with callout: Deal of Delivery (created yes / no, commitments, who agreed, where stored)
+10. stats: outcomes so far (optional; measured results only)
+11. closing
+For a portfolio deck: title, agenda, then one `snapshot` per project, closing.
+
 ## Product or tool demo (6 to 9 slides)
 title, agenda, cards (what it is: 4 capabilities), stats (where it helps, as percentages), cards (the scenarios you will show: ticket, fix, result), section "LIVE DEMO" (leave on screen while switching), stats or bullets (recap), timeline or process (next steps), closing. Put every explanatory slide before the live part so the presenter switches screens once.
 

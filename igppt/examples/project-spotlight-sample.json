@@ -1,0 +1,83 @@
+{
+ "theme": "dark",
+ "slides": [
+  {"type": "title", "title": "Project Spotlight: Claims Portal Rebuild", "subtitle": "Sample deck: a fictional project, for illustration only", "date": "Nov 2026",
+   "notes": "Every name, client and number in this deck is invented to show the expected level of detail. Do not reuse the figures."},
+
+  {"type": "snapshot", "title": "Claims Portal Rebuild: 40% Faster Payouts", "eyebrow": "Project Spotlight | Sample, fictional",
+   "subtitle": "Regional insurer | Digital Engineering practice | PM: Jordan Lee | Jan 2026 to Dec 2027",
+   "stats": [
+    {"value": "Digital Eng.", "label": "Practice", "text": "Application modernisation"},
+    {"value": "8 FTE", "label": "Team size", "text": "3 onshore, 5 offshore"},
+    {"value": "24 mo", "label": "Project length", "text": "Jan 2026 to Dec 2027"},
+    {"value": "$1.2M", "label": "ACV", "text": "Annual contract value"},
+    {"value": "$2.4M", "label": "TCV", "text": "Total value over 2 years"}],
+   "cards": [
+    {"icon": "warning", "title": "Customer Problem", "highlight": true,
+     "bullets": ["Claims took 20 days to pay out", "Agents re-keyed data across 3 legacy systems", "No live view of claim status for customers"]},
+    {"icon": "route", "title": "Scope",
+     "bullets": ["In: claims intake, triage and payout flow", "In: migrate 5 years of claims history", "Out: policy admin and billing"]},
+    {"icon": "code", "title": "Technologies",
+     "chips": ["Azure", ".NET 8", "React", "Databricks", "Power BI", "Azure DevOps"]},
+    {"icon": "search", "title": "How We Found the Need",
+     "bullets": ["Account review flagged rising complaints", "2-week discovery with 14 user interviews", "Business case approved by client CFO"]},
+    {"icon": "clipboard-check", "title": "Deal of Delivery", "tag": "DOD",
+     "bullets": ["Created Feb 2026, at contract signing", "Commits 6 releases and 4 payment milestones", "Agreed with client VP Claims, on SharePoint"]},
+    {"icon": "chart", "title": "Outcomes", "tag": "Optional",
+     "bullets": ["Payout time down from 20 to 12 days (40%)", "Manual re-keying removed", "CSAT up from 3.6 to 4.3 out of 5"]}],
+   "notes": "Sample, fictional. Shows a filled one-page snapshot: one slide per project in the main deck."},
+
+  {"type": "section", "title": "Deep Dive: Claims Portal Rebuild"},
+
+  {"type": "stats", "title": "Engagement at a Glance", "eyebrow": "Overview",
+   "subtitle": "Regional insurer | Digital Engineering practice | PM: Jordan Lee",
+   "stats": [
+    {"value": "8", "label": "Team size (FTE)", "text": "3 onshore, 5 offshore: PM, architect, 4 developers, 2 QA"},
+    {"value": "24 mo", "label": "Project length", "text": "January 2026 to December 2027"},
+    {"value": "$1.2M", "label": "ACV", "text": "Annual contract value"},
+    {"value": "$2.4M", "label": "TCV", "text": "Total contract value over 2 years"}],
+   "note": "Check: $1.2M x 2 years = $2.4M. Flat contract, no ramp-up year. Sample figures, fictional."},
+
+  {"type": "comparison", "title": "The Customer Problem", "eyebrow": "Why",
+   "left": {"tag": "Before", "heading": "Slow, manual payouts", "points": ["Claims took 20 days to pay out", "Agents re-keyed every claim into 3 systems", "Customers phoned in to ask for status"]},
+   "right": {"tag": "After", "heading": "One portal, end to end", "points": ["Payouts in 12 days", "Claim data entered once, shared by all", "Customers track status online"], "highlight": true}},
+
+  {"type": "comparison", "title": "What Is in Scope", "eyebrow": "Scope",
+   "left": {"tag": "In scope", "heading": "Claims journey", "points": ["Claims intake web and mobile", "Triage rules and payout workflow", "Migration of 5 years of claims history"], "color": "green", "highlight": true},
+   "right": {"tag": "Out of scope", "heading": "Left with the client", "points": ["Policy administration system", "Billing and collections", "Call centre telephony"], "color": "magenta"}},
+
+  {"type": "cards", "title": "Technologies We Use", "eyebrow": "Technology", "grid": true,
+   "cards": [
+    {"icon": "database", "title": "Cloud and platform", "text": "Azure App Service, Azure SQL and Service Bus."},
+    {"icon": "code", "title": "Application", "text": ".NET 8 services with a React front end."},
+    {"icon": "chart", "title": "Data and AI", "text": "Databricks for the migration, Power BI for claims reporting."},
+    {"icon": "tools", "title": "DevOps and tooling", "text": "Azure DevOps pipelines and boards, Terraform for infrastructure."}]},
+
+  {"type": "process", "title": "How We Identified the Need", "eyebrow": "Need",
+   "steps": [
+    {"title": "Trigger", "owner": "Account lead", "text": "Quarterly review showed complaints up 30%.", "icon": "flag"},
+    {"title": "Discovery", "owner": "IG team", "text": "2 weeks: 14 interviews and process maps.", "icon": "search"},
+    {"title": "Business case", "owner": "Joint", "text": "Faster payouts and less re-keying.", "icon": "dollar"},
+    {"title": "Approval", "owner": "Client CFO", "text": "Signed off in December 2025.", "icon": "check-circle"}],
+   "highlight": 1,
+   "bullets": ["Discovery found most delay came from re-keying, not from claim reviews", "That finding moved data migration into scope"]},
+
+  {"type": "bullets", "title": "Deal of Delivery", "eyebrow": "DOD",
+   "bullets": [
+    "Deliverables committed: claims portal, triage rules, data migration",
+    "Milestones: 6 releases, 4 payment milestones",
+    "Agreed by: client VP Claims and IG delivery director",
+    "Stored at: shared account SharePoint, delivery folder",
+    "Changes since signing: release 4 moved one month for a security review"],
+   "callout": {"value": "Yes", "label": "DOD created", "text": "February 2026, at contract signing."}},
+
+  {"type": "stats", "title": "Outcomes So Far", "eyebrow": "Optional",
+   "stats": [
+    {"value": "40%", "label": "Faster payouts", "text": "From 20 days to 12."},
+    {"value": "0", "label": "Systems to re-key", "text": "Down from 3."},
+    {"value": "4.3/5", "label": "Client satisfaction", "text": "Up from 3.6."}],
+   "note": "Source: sample figures, fictional. A real deck names the source and period here."},
+
+  {"type": "closing", "style": "thank-you"}
+ ]
+}

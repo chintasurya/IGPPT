@@ -96,11 +96,22 @@ Chart `type`: `column`, `bar` (horizontal), `stacked-column`, `line`, `pie`, `do
 ### team
 `{"type": "team", "title": "Who to Contact", "members": [{"name": "Alex Morgan", "role": "Delivery Lead", "text": "optional"}]}` (up to 8; initials in coloured circles)
 
+### snapshot
+```json
+{"type": "snapshot", "title": "Claims Portal Rebuild: 40% Faster Payouts", "eyebrow": "Project Spotlight",
+ "subtitle": "Client | Practice | PM: Name | Jan 2026 to Dec 2027",
+ "stats": [{"value": "8 FTE", "label": "Team size", "text": "3 onshore, 5 offshore"}],
+ "cards": [{"icon": "warning", "title": "Customer Problem", "bullets": ["..."], "highlight": true},
+           {"icon": "code", "title": "Technologies", "chips": ["Azure", ".NET 8", "React"]},
+           {"icon": "clipboard-check", "title": "Deal of Delivery", "tag": "DOD", "text": "One or two sentences."}]}
+```
+A one-page summary: a row of up to 5 number tiles (`stats`, one-line `value`, `label` and `text`) above up to 6 cards (3 per row; 2 per row for 2 or 4 cards). Each card takes `bullets`, `text` or `chips` (pill tags, for example technologies), plus optional `icon`, `tag` and `highlight`. All cards share one body size. Keep card bullets to about 3 short lines. Used by the Project Spotlight recipe.
+
 ### closing
 `{"type": "closing", "style": "thank-you"}` (`style`: `thank-you`, `tagline`, `tagline-texture`, `logo`)
 
 ## Building and validating
 
-Run `python scripts/make_deck.py deck.json out.pptx`. It fixes dashes and double spaces in the spec, builds the deck, validates it, and saves `out.pptx` only on PASS. Each problem names the spec field to change, for example `slides[3].cards[1].text`. Limits that fail the build because content would be dropped: agenda 7 items, cards 6, stats 4, process steps 6, timeline milestones 7, team members 8. Unknown icons fall back to a number with a warning.
+Run `python scripts/make_deck.py deck.json out.pptx`. It fixes dashes and double spaces in the spec, builds the deck, validates it, and saves `out.pptx` only on PASS. Each problem names the spec field to change, for example `slides[3].cards[1].text`. Limits that fail the build because content would be dropped: agenda 7 items, cards 6, stats 4, process steps 6, timeline milestones 7, team members 8, snapshot 5 tiles and 6 cards (and card tags that do not fit). Unknown icons fall back to a number with a warning.
 
 Text rules: no em dashes, en dashes or `--` (use a comma, colon or hyphen); no leftover placeholder text such as lorem ipsum or TODO. `[XX%]`-style placeholders are allowed but reported. Names the spell check does not know go in `igppt-words.txt` next to the spec.
