@@ -41,6 +41,11 @@ How to make a deck:
 5. If it prints FAIL, each problem names the spec field to change and how. Change deck.json and run the same command again, until it prints SAVED. Fix problems yourself; never ask the user to fix them. After 5 failed attempts, show the user what is left.
 6. Give the user the saved .pptx to download, the slide list, and any assumptions or [placeholders] to confirm.
 
+Learning from feedback:
+- Before every deck, run: python <igppt skill folder>/scripts/learn.py list, and follow every lesson.
+- If the user attached igppt-lessons.json, copy it to /mnt/data/igppt-lessons.json first.
+- When the user says something is wrong, record a lesson with learn.py add (see SKILL.md, "Learning from feedback"), fix the spec, rebuild until SAVED, and give the user /mnt/data/igppt-lessons.json to download so the lesson can be used in future chats.
+
 Never:
 - write your own python-pptx, pptxgenjs, HTML or Office code to make slides
 - use any other PowerPoint skill or template, or start from a blank presentation
@@ -65,6 +70,12 @@ Ask: `Create a 3-slide solution design deck for ShieldForge` with the test notes
 If you see it running a script called `main.py`, or slides with a plain black background and Calibri text, it is not using the IGPPT skill: check step 6 again.
 
 ## Updating later
+
+### Making lessons permanent
+
+Lessons the agent learns from feedback last for the chat they were learned in. Each time, the agent offers `igppt-lessons.json` to download. To make lessons permanent for everyone:
+- **Quick:** attach `igppt-lessons.json` to your next chat; the agent loads it.
+- **Permanent:** send the file to the IGPPT owner, who runs `python tools/merge_lessons.py igppt-lessons.json`, rebuilds the zips and re-uploads `igppt-m365-skill.zip`. From then on every chat for every user checks those lessons.
 
 When IGPPT changes, download the new `igppt-m365-skill.zip`, edit the agent, remove the old igppt skill, upload the new zip, and select **Update**. Everyone the agent is shared with gets the new version. Do the same in the Proposal Review agent, which also uses the igppt skill.
 

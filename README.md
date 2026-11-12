@@ -21,6 +21,8 @@ It follows the open Agent Skills format (a folder with `SKILL.md`), so the same 
 | `igppt/scripts/ig_metrics.py`, `ig_text.py` | Text measuring and text rules shared by the builder and the validator |
 | `igppt/scripts/init.py` | One-time project set-up and self-test |
 | `igppt/scripts/check_deck.py` | Older name for `validate.py` |
+| `igppt/scripts/learn.py`, `igppt/assets/lessons.json` | Lessons learned from feedback, checked on every build |
+| `tools/merge_lessons.py` | Makes lessons from users' `igppt-lessons.json` files permanent in the skill |
 | `igppt/scripts/spellchecker`, `igppt/assets/spell-en.json` | Bundled spell checker and English dictionary (pyspellchecker, MIT), so no install is needed |
 | `igppt/assets/wordlist.txt` | Business and technology words the spell check accepts |
 | `igppt/scripts/render_preview.py` | Slide images for checking (needs LibreOffice) |
@@ -178,6 +180,18 @@ Limits to know about:
 - Text is measured with Inter's character widths, because the Trenda IG Text font files are not bundled. Measurements match LibreOffice renders closely and include a 2% safety margin, but Trenda in real PowerPoint may lay out a little differently. If you have the Trenda files, `python tools/make_font_metrics.py regular.otf bold.otf light.otf` rebuilds the widths from the real font.
 - Spelling is English (US and UK spellings). It cannot judge grammar, wrong-but-real words ("form" for "from"), or whether a name is spelled right.
 - The validator checks geometry and text; it does not look at the rendered picture. Use `--preview` for a final look when LibreOffice is installed.
+
+## Learning from feedback
+
+The model behind Copilot cannot be retrained, so IGPPT turns every correction into a **lesson**: a rule checked on every build. When a user says "this is wrong", the agent records it with `scripts/learn.py add` (for example "never 'And' in title case in a title", "at most 5 bullets", "always end with a closing slide"), proves the rule catches the mistake, fixes the deck and rebuilds. `make_deck.py` will not save a deck that breaks a lesson.
+
+Lessons learned in a Microsoft 365 or ChatGPT chat last for that chat; the agent offers `igppt-lessons.json` to download. Attach it to later chats, or make it permanent for everyone:
+
+```bash
+python tools/merge_lessons.py igppt-lessons.json
+```
+
+then run the tests, `python tools/build_zips.py`, commit, and re-upload `igppt-m365-skill.zip`. In VS Code or Claude Code, lessons are saved in the project's `igppt-lessons.json` and apply at once. Feedback that no rule can express is stored as `guidance`, which the agent reads before every deck but the code cannot enforce.
 
 ## Proposal review skill
 

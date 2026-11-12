@@ -6,7 +6,8 @@ This is the one command to use. It:
   1. checks the spec (valid JSON, known slide types, required fields),
   2. fixes mechanical text problems in the spec itself (em and en dashes, double spaces) and saves the spec,
   3. builds a draft on the IG template with build_deck.py,
-  4. validates the draft with validate.py (template, fonts, colours, overflow, overlap, spacing, dashes, spelling),
+  4. validates the draft with validate.py (template, fonts, colours, overflow, overlap, spacing, dashes, spelling)
+     and checks every lesson learned from feedback (learn.py),
   5. saves out.pptx ONLY if everything passes. On FAIL nothing is saved: each problem names the spec field
      to change. Change the spec and run the same command again.
 
@@ -21,6 +22,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import build_deck  # noqa: E402
 import ig_text  # noqa: E402
+import learn  # noqa: E402
 import validate as V  # noqa: E402
 
 TEXT_SKIP = {"type", "color", "icon", "theme", "background", "image", "style", "number_format"}
@@ -105,6 +107,11 @@ def main():
             for p, c in changes:
                 print(f"  {p}: {c}")
     problems = check_spec(spec)
+    lessons = learn.load(spec_path.resolve().parent)
+    checked = [l for l in lessons if l.get("kind") != "guidance"]
+    if lessons:
+        print(f"Lessons in force: {len(lessons)} ({len(checked)} checked automatically). See: python learn.py list")
+    problems += learn.check(spec, checked)
     if any(level == "FAIL" for level, _, _ in problems):
         for level, i, msg in problems:
             print(f"{level}  {'slide ' + str(i) if i else 'spec'}: {msg}")

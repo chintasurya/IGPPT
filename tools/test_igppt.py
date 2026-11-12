@@ -137,6 +137,39 @@ def _():
     expect(code == 0 and "unknown icon" not in out, "aliased icons should build without warnings", out)
 
 
+@test("a lesson learned from feedback stops the same mistake, then merges into the skill")
+def _():
+    import os
+    lessons = TMP / "igppt-lessons.json"
+    spec = deck({"type": "bullets", "title": "Staffing And Automation", "bullets": ["Six analysts in 30 days"]})
+    path = TMP / "lesson.json"
+    path.write_text(json.dumps(spec), encoding="utf-8")
+    code, out = run(SCRIPTS / "learn.py", "add", "--kind", "banned_text", "--scope", "title", "--pattern", r"\bAnd\b",
+                    "--match-case", "--mistake", "Title Case And", "--fix", "lower-case and", "--feedback", "test",
+                    "--spec", path, "--save", lessons)
+    expect(code == 0 and "It catches the reported mistake" in out, "lesson should be saved and catch the mistake", out)
+    code, out = run(SCRIPTS / "make_deck.py", path, TMP / "lesson.pptx")
+    expect(code == 1 and "lesson L" in out and not (TMP / "lesson.pptx").exists(), "the same mistake must now fail", out)
+    spec["slides"][1]["title"] = "Staffing and Automation"
+    path.write_text(json.dumps(spec), encoding="utf-8")
+    code, out = run(SCRIPTS / "make_deck.py", path, TMP / "lesson.pptx")
+    expect(code == 0, "the corrected deck must pass", out)
+    for bad in (["--kind", "banned_text", "--pattern", "([", "--mistake", "x", "--fix", "y"], ["--kind", "nonsense"]):
+        code, out = run(SCRIPTS / "learn.py", "add", *bad, "--save", TMP / "bad-lessons.json")
+        expect(code == 2, "invalid lessons must be refused", out)
+    bundled = ROOT / "igppt" / "assets" / "lessons.json"
+    before = bundled.read_text(encoding="utf-8")
+    try:
+        code, out = run(ROOT / "tools" / "merge_lessons.py", lessons)
+        expect(code == 0 and "Added 1 lesson" in out and "Title Case And" in bundled.read_text(encoding="utf-8"), "merge", out)
+        lessons.unlink()
+        code, out = run(SCRIPTS / "learn.py", "test", path)
+        expect(code == 0, "merged lesson is now bundled and the fixed spec passes", out)
+    finally:
+        bundled.write_text(before, encoding="utf-8")
+        lessons.unlink(missing_ok=True)
+
+
 # ---------------------------------------------------------------- layout rules
 LONG = ("Moved every release onto the automated pipeline, removed manual approvals, added smoke tests after each deploy, "
         "documented rollback for each service and trained the support team on the new runbook so they own incidents.")
