@@ -17,12 +17,12 @@ Fields shared by all content slides (everything except `title`, `agenda`, `secti
 | `title` | Slide title: the message of the slide, 45 characters or fewer |
 | `eyebrow` | Small section label above the title (optional) |
 | `subtitle` | One line under the title (optional, about 110 characters max) |
-| `note` | Band at the bottom for a source, assumption or key message (optional) |
-| `notes` | Speaker notes (optional, any slide type) |
+| `note` | Band at the bottom, shown ON the slide: a source, an assumption or a key message for the audience (optional). Never audience or presenter remarks |
+| `notes` | Hidden speaker notes (optional, any slide type): talking points, audience, reminders |
 
 Colours: wherever `color` is allowed, use `cyan`, `yellow`, `magenta`, `green`, `orange` or a hex code. Leave it out to follow the IG order.
 
-Icons: wherever `icon` is allowed, use a name from `references/ig-brand.md`. Unknown names fall back to a number with a warning.
+Icons: wherever `icon` is allowed, use a name from `references/ig-brand.md`. Common words also work (people, team, gear, settings, money, time, security, growth, goal, launch, risk, research, support and more map to the nearest icon). Unknown names fall back to a number with a warning.
 
 ## Slide types
 

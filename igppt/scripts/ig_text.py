@@ -26,6 +26,9 @@ _SPACED = re.compile(r"\s+[–—―]\s+|\s*--\s*")                      # word 
 _TIGHT = re.compile(r"(?<=\w)[–—―](?=\w)")                         # word—word
 _ANY_DASH = re.compile(r"[–—―]|--")
 PLACEHOLDER_FAIL = re.compile(r"lorem ipsum|click to (add|edit)|\bTODO\b|\bFIXME\b|\binsert (text|title|here)\b", re.I)
+INTERNAL = re.compile(r"(?:^|[.;!?]\s+|\n)\s*(audience|target audience|presenter|presenter notes?|speaker notes?|"
+                      r"talking points?|notes? to self|note for (?:the )?(?:presenter|team)|internal(?: only| note)?|"
+                      r"for internal use|do not show|instructions?|prompt)\s*:", re.I)
 PLACEHOLDER_WARN = re.compile(r"\[[^\]]{0,40}\]|\bTBD\b|\bXX+\b|\?\?")
 
 
@@ -156,6 +159,10 @@ def check_text(text, spelling=True):
     m = re.search(r"\b(\w+)\s+\1\b", text, re.I)
     if m and not m.group(1).isdigit() and m.group(1).lower() not in ("had", "that", "bye", "very", "so", "no"):
         probs.append((FAIL, f"repeated word '{m.group(0)}'"))
+    m = INTERNAL.search(text)
+    if m:
+        probs.append((FAIL, f"internal or presenter note shown on the slide ('{m.group(1)}:'); move it to the speaker "
+                            f"notes (\"notes\"), not the on-slide \"note\""))
     m = PLACEHOLDER_FAIL.search(text)
     if m:
         probs.append((FAIL, f"leftover placeholder text '{m.group(0)}'"))

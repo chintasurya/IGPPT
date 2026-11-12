@@ -115,6 +115,28 @@ def _():
     expect(code == 1 and "repeated word" in out and "lorem ipsum" in out.lower(), "both must fail", out)
 
 
+@test("internal or presenter notes on a slide fail; speaker notes are fine")
+def _():
+    spec = deck({"type": "bullets", "title": "Where We Are", "bullets": ["On track"],
+                 "note": "Audience: CISO and IT Director. Next step is scoping."})
+    code, out, _ = make(spec, "internal")
+    expect(code == 1 and "internal or presenter note" in out and "slides[1].note" in out, "on-slide audience note must fail", out)
+    spec["slides"][1]["notes"] = spec["slides"][1].pop("note")
+    code, out, _ = make(spec, "internal")
+    expect(code == 0, "the same text in speaker notes must pass", out)
+
+
+@test("common icon names map to the bundled icons")
+def _():
+    import build_deck
+    expect(build_deck.resolve_icon(1, "people") == "users" and build_deck.resolve_icon(1, "gear") == "cogs"
+           and build_deck.resolve_icon(1, "Security") == "shield" and build_deck.resolve_icon(1, "rockets") == "rocket",
+           "aliases should resolve")
+    code, out, _ = make(deck({"type": "process", "title": "How Work Flows", "steps": [
+        {"title": "Staff", "text": "Place analysts.", "icon": "people"}, {"title": "Automate", "text": "Triage.", "icon": "gear"}]}), "icons")
+    expect(code == 0 and "unknown icon" not in out, "aliased icons should build without warnings", out)
+
+
 # ---------------------------------------------------------------- layout rules
 LONG = ("Moved every release onto the automated pipeline, removed manual approvals, added smoke tests after each deploy, "
         "documented rollback for each service and trained the support team on the new runbook so they own incidents.")

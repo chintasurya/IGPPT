@@ -33,6 +33,9 @@ It follows the open Agent Skills format (a folder with `SKILL.md`), so the same 
 | `copilot/igppt-m365-skill.zip` | The skill packed for Microsoft 365 Copilot Agent Builder (SKILL.md at the zip root) |
 | `copilot/M365-AGENT-SETUP.md` | Step-by-step set-up of the IGPPT agent in Microsoft 365 Copilot |
 | `tools/test_igppt.py` | Regression tests: clean decks pass, broken decks fail |
+| `ig-proposal-review/` | Second skill: reviews a proposal against the RFP (requirements, gaps, competition, differentiators, team size, pricing) with verified quotes and sourced facts, and builds the review deck and a corrected deck with IGPPT |
+| `chatgpt/ig-proposal-review-skill.zip`, `copilot/ig-proposal-review-m365-skill.zip` | The review skill packed for ChatGPT / claude.ai and for Microsoft 365 Copilot |
+| `tools/test_review.py` | Tests for the review skill: invented quotes, unsourced facts and wrong maths fail |
 
 ## Install: one command
 
@@ -176,6 +179,16 @@ Limits to know about:
 - Spelling is English (US and UK spellings). It cannot judge grammar, wrong-but-real words ("form" for "from"), or whether a name is spelled right.
 - The validator checks geometry and text; it does not look at the rendered picture. Use `--preview` for a final look when LibreOffice is installed.
 
+## Proposal review skill
+
+`ig-proposal-review` reviews a bid: it extracts the customer's requirements from the RFP with exact quotes, researches the customer and the competition (with links, when web search is available), marks each requirement met, partial or missing against the proposal, lists the gaps with fixes, keeps only provable differentiators, and checks team size and pricing with calculations it shows. `check_review.py` rejects quotes that are not in the documents, outside facts without a source, and recommendations that contradict the maths. The review deck and the corrected proposal deck are built and validated by IGPPT.
+
+```bash
+python ig-proposal-review/scripts/extract_docs.py rfp.pdf proposal.pptx pricing.xlsx --out corpus
+python ig-proposal-review/scripts/check_review.py review.json --corpus corpus
+python ig-proposal-review/scripts/review_to_deck.py review.checked.json "Customer Proposal Review.pptx"
+```
+
 ## Microsoft 365 Copilot (Agent Builder)
 
 Microsoft 365 Copilot cannot run install commands, but its agents can use uploaded **skills** that run Python. Upload `copilot/igppt-m365-skill.zip` (SKILL.md at the root of the zip, as Agent Builder requires) as the agent's skill, paste the agent instructions, and share the agent. Step-by-step guide: [`copilot/M365-AGENT-SETUP.md`](copilot/M365-AGENT-SETUP.md).
@@ -192,9 +205,9 @@ If Agent Builder creates its own skill (for example `igppt-deck-builder` with a 
 
 After changing anything in `igppt/` or `copilot/`:
 
-1. `python tools/test_igppt.py` (all tests must pass),
+1. `python tools/test_igppt.py` and `python tools/test_review.py` (all tests must pass),
 2. `python tools/make_manifest.py`,
-3. `python tools/build_zips.py` (rebuilds `chatgpt/igppt-skill.zip` and `copilot/igppt-m365-skill.zip`),
+3. `python tools/build_zips.py` (checks Microsoft's skill upload rules and rebuilds all four zips),
 
 then commit; the installer downloads the files listed in `manifest.json`.
 

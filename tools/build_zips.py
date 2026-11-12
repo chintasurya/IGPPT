@@ -1,9 +1,9 @@
-"""Rebuild the two upload packages of the skill. Run after any change to igppt/.
+"""Rebuild the upload packages of both skills (igppt and ig-proposal-review). Run after any change to them.
 
     python tools/build_zips.py
 
-  chatgpt/igppt-skill.zip       igppt/SKILL.md inside an igppt folder (ChatGPT, claude.ai, SKILL.md download fallback)
-  copilot/igppt-m365-skill.zip  SKILL.md at the root of the zip, as Microsoft 365 Copilot Agent Builder requires
+  chatgpt/<skill>-skill.zip       SKILL.md inside a folder named after the skill (ChatGPT, claude.ai)
+  copilot/<skill>-m365-skill.zip  SKILL.md at the root of the zip, as Microsoft 365 Copilot Agent Builder requires
 
 Before building, it checks the skill against Agent Builder's upload rules (file types, scripts/ holds code only,
 folder depth, sizes) and stops if anything would be rejected.
@@ -12,6 +12,10 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+SKILLS = {  # skill folder: (ChatGPT / claude.ai zip, Microsoft 365 Copilot zip)
+    "igppt": ("chatgpt/igppt-skill.zip", "copilot/igppt-m365-skill.zip"),
+    "ig-proposal-review": ("chatgpt/ig-proposal-review-skill.zip", "copilot/ig-proposal-review-m365-skill.zip"),
+}
 SKILL = ROOT / "igppt"
 
 
@@ -69,15 +73,21 @@ def m365_problems():
 
 
 if __name__ == "__main__":
-    problems = m365_problems()
-    if problems:
-        print("The skill breaks Microsoft 365 Copilot's upload rules:")
-        for p in problems:
-            print("  -", p)
+    bad = False
+    for name, (chat_zip, m365_zip) in SKILLS.items():
+        SKILL = ROOT / name
+        problems = m365_problems()
+        if problems:
+            bad = True
+            print(f"{name} breaks Microsoft 365 Copilot's upload rules:")
+            for p in problems:
+                print("  -", p)
+            continue
+        build(ROOT / chat_zip, name + "/")
+        out = ROOT / m365_zip
+        build(out, "")
+        if out.stat().st_size > MAX_ZIP_MB * 1e6:
+            raise SystemExit(f"{out.name} is over {MAX_ZIP_MB} MB")
+    if bad:
         raise SystemExit(1)
-    build(ROOT / "chatgpt" / "igppt-skill.zip", "igppt/")
-    out = ROOT / "copilot" / "igppt-m365-skill.zip"
-    build(out, "")
-    if out.stat().st_size > MAX_ZIP_MB * 1e6:
-        raise SystemExit(f"{out.name} is over {MAX_ZIP_MB} MB")
     print("Microsoft 365 Copilot upload rules: OK")

@@ -1,6 +1,11 @@
-# IGPPT agent in Microsoft 365 Copilot
+# IGPPT agents in Microsoft 365 Copilot
 
-Set it up once, then share the agent. People who use it only open the agent and type.
+Two agents, each set up once and then shared. People who use them only open the agent and type.
+
+- **Part A: IGPPT**, which builds Insight Global decks. Skill: `igppt-m365-skill.zip`.
+- **Part B: IG Proposal Review**, which reviews a proposal against the RFP and builds a review deck and a corrected deck. Skills: `ig-proposal-review-m365-skill.zip` and `igppt-m365-skill.zip`.
+
+# Part A: IGPPT
 
 You need: Microsoft 365 Copilot (Agent Builder) with **skills** available in your tenant. Microsoft has described skills as a preview feature in some tenants; if you do not see "Skills" when editing an agent, ask IT.
 
@@ -61,4 +66,59 @@ If you see it running a script called `main.py`, or slides with a plain black ba
 
 ## Updating later
 
-When IGPPT changes, download the new `igppt-m365-skill.zip`, edit the agent, remove the old igppt skill, upload the new zip, and select **Update**. Everyone the agent is shared with gets the new version.
+When IGPPT changes, download the new `igppt-m365-skill.zip`, edit the agent, remove the old igppt skill, upload the new zip, and select **Update**. Everyone the agent is shared with gets the new version. Do the same in the Proposal Review agent, which also uses the igppt skill.
+
+# Part B: IG Proposal Review
+
+A separate agent keeps each one simple: IGPPT for making decks, this one for reviewing bids.
+
+## 1. Download both skill packages
+
+- https://github.com/chintasurya/igppt/raw/main/copilot/ig-proposal-review-m365-skill.zip
+- https://github.com/chintasurya/igppt/raw/main/copilot/igppt-m365-skill.zip (the review and corrected decks are built with it)
+
+## 2. Create the agent
+
+1. **Agents** → **Create agent** → **Configure** tab.
+2. **Name:** `IG Proposal Review`
+3. **Description:** `Reviews a proposal against the customer's RFP: requirements, gaps, competition, differentiators, team size and pricing, with quotes and sources. Produces a review report, an IG review deck and a corrected deck.`
+4. **Instructions:** paste the box below.
+5. **Skills:** upload both zips. Remove any skill Copilot created by itself.
+6. **Capabilities:** turn on **Create documents, charts, and code**.
+7. **Web search:** turn on searching the web (under Knowledge), if your organisation allows it. Without it the agent reviews only the shared documents and says that no outside research was done.
+8. **Starter prompts:** add the four below. Then **Create**, test, and **Share**.
+
+### Instructions
+
+```
+You review Insight Global proposals. For every review use the ig-proposal-review skill; for every deck use the igppt skill.
+
+1. Read the ig-proposal-review skill's SKILL.md, then references/review-method.md and references/review-schema.md.
+2. Find the files the user shared (often in /mnt/data; run ls if unsure) and run the skill's extract_docs.py on all of them. Read all of the extracted text.
+3. Follow the skill's workflow: the customer's requirements, research on the customer and the competition (web search, with links), coverage and gaps, differentiators, team size and pricing.
+4. Write review.json and run check_review.py. Fix every FAIL it lists and run it again until it prints PASS.
+5. Build the review deck with review_to_deck.py until it prints SAVED.
+6. If the user asks for a corrected proposal deck (offer it if they did not), write an igppt spec from the original deck plus the recommended changes and build it with the igppt skill's make_deck.py until SAVED. Note each change in that slide's speaker notes.
+7. Reply with: the verdict, the top gaps, the team-size and pricing results with their numbers, how to stand out against the competition, what could not be checked, and the files (review.md, review deck, corrected deck).
+
+Honesty rules, always:
+- Quote the documents word for word; check_review.py rejects quotes it cannot find.
+- Every fact from outside the documents needs a web link and date. No link, no fact: list it as an open question.
+- Never invent numbers, competitor prices, market rates or win chances. Pricing and team-size maths comes from the skill's scripts.
+- Say plainly what you could not read, find or check.
+```
+
+### Starter prompts
+
+| Title | Prompt |
+|---|---|
+| Review a proposal | Review our proposal against the attached RFP. Find the gaps and tell me how to stand out. |
+| Team size and pricing | Check whether the team size and pricing in our proposal hold up against the RFP. |
+| Competition | Who are we likely competing against for this RFP, and how do we stand out? |
+| Review and fix | Review the attached proposal and give me a corrected IG version of the deck. |
+
+## 3. Test
+
+Attach an RFP (Word or PDF), the proposal deck (PowerPoint) and the pricing (Excel), then use "Review a proposal". A correct run shows the agent running `extract_docs.py`, `check_review.py` (until PASS), and `review_to_deck.py` (SAVED). You get `review.md` and an IG review deck: verdict, requirement coverage, gaps, competition, differentiators, team size, pricing check, recommended changes, questions and assumptions.
+
+Things it will not do, by design: guess a market rate, name a competitor without a source, or quote the RFP from memory.

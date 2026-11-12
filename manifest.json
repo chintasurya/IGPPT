@@ -2,6 +2,13 @@
  "files": [
   "copilot/M365-AGENT-SETUP.md",
   "copilot/agents/igppt.agent.md",
+  "ig-proposal-review/SKILL.md",
+  "ig-proposal-review/references/review-method.md",
+  "ig-proposal-review/references/review-schema.md",
+  "ig-proposal-review/scripts/calc.py",
+  "ig-proposal-review/scripts/check_review.py",
+  "ig-proposal-review/scripts/extract_docs.py",
+  "ig-proposal-review/scripts/review_to_deck.py",
   "igppt/SKILL.md",
   "igppt/assets/font-metrics.json",
   "igppt/assets/icons/balance-black.png",

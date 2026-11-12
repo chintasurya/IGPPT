@@ -67,12 +67,16 @@ function countFiles(dir) {
   return fs.readdirSync(dir, { withFileTypes: true })
     .reduce((n, e) => n + (e.isDirectory() ? countFiles(path.join(dir, e.name)) : 1), 0);
 }
+const SKILLS = ["igppt", "ig-proposal-review"];   // deck builder, and the proposal reviewer that uses it
 for (const d of skillDirs) {
-  const dst = path.join(root, d, "igppt");
-  fs.rmSync(dst, { recursive: true, force: true });
-  fs.mkdirSync(path.dirname(dst), { recursive: true });
-  fs.cpSync(path.join(PKG, "igppt"), dst, { recursive: true, filter: skip });
-  console.log(`  Writes ${countFiles(dst)} files to ${path.join(d, "igppt")}/`);
+  for (const name of SKILLS) {
+    if (!fs.existsSync(path.join(PKG, name))) continue;
+    const dst = path.join(root, d, name);
+    fs.rmSync(dst, { recursive: true, force: true });
+    fs.mkdirSync(path.dirname(dst), { recursive: true });
+    fs.cpSync(path.join(PKG, name), dst, { recursive: true, filter: skip });
+    console.log(`  Writes ${countFiles(dst)} files to ${path.join(d, name)}/`);
+  }
 }
 
 const agentSrc = fs.readFileSync(path.join(PKG, "copilot", "agents", "igppt.agent.md"), "utf8");

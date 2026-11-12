@@ -81,6 +81,7 @@ Warnings (the deck is still saved, but read them): unknown words such as names, 
 |---|---|
 | overflows / crosses / touches the edge / runs into the footer | Cut the characters it suggests, move points to a new slide, or remove the `note` |
 | title wraps / title shrank | A title of 45 characters or fewer |
+| internal or presenter note shown on the slide | Move that text from `note` to `notes` (speaker notes) |
 | word is too wide | A shorter word (for example in `owner` or `tag`), or fewer steps or cards per slide |
 | were dropped | Split into two slides (at most: agenda 7, cards 6, stats 4, steps 6, milestones 7, people 8) |
 | em dash / en dash | Fixed automatically by `make_deck.py`; otherwise use a comma, colon or hyphen |
@@ -106,6 +107,7 @@ When you are editing an existing deck the requester supplied, read it first with
 - **Numbers agree** everywhere they appear; parts add up to their totals; percentages are rounded the same way.
 - **Label estimates and sources.** Never invent figures. Unknown values become clearly marked placeholders such as `[XX%]` and are listed in your reply.
 - **Plain words.** No internal shorthand on slides; one name per thing across the deck. No em dashes.
+- **Slides are for the audience.** `note` is shown ON the slide (a source, an assumption the audience should see, or the key message). `notes` are hidden speaker notes. Never put "Audience: ...", presenter reminders or other internal remarks on a slide; the validator rejects them.
 - **Client confidentiality.** Do not carry one client's names or data into another client's deck. For a deck that may travel outside the client, prefer percentages to raw counts and ask before naming a client.
 - **Say what does not fit.** Showing limits makes the rest credible.
 
