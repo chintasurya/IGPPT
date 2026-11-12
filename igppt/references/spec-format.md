@@ -107,6 +107,13 @@ Chart `type`: `column`, `bar` (horizontal), `stacked-column`, `line`, `pie`, `do
 ```
 A one-page summary: a row of up to 5 number tiles (`stats`, one-line `value`, `label` and `text`) above up to 6 cards (3 per row; 2 per row for 2 or 4 cards). Each card takes `bullets`, `text` or `chips` (pill tags, for example technologies), plus optional `icon`, `tag` and `highlight`. All cards share one body size. Keep card bullets to about 3 short lines. Used by the Project Spotlight recipe.
 
+A card can also take `"span": 2` to stretch across two columns, `"tag_color"` to colour its tag separately from the card, and `fields` instead of bullets: label-and-value pairs in a grid (`"columns"`, default 4), for example a Deal of Delivery record:
+```json
+{"icon": "clipboard-check", "title": "Deal of Delivery", "span": 2, "color": "orange", "highlight": true, "tag": "DOD: Go-Live", "tag_color": "green",
+ "fields": [{"label": "Delivery lead", "value": "Name"}, {"label": "Weekly spread", "value": "$6,200"}]}
+```
+Two rows of 4 fields fit a card on a two-row snapshot. `examples/project-spotlight-dod-template.json` is a blank snapshot laid out this way.
+
 ### closing
 `{"type": "closing", "style": "thank-you"}` (`style`: `thank-you`, `tagline`, `tagline-texture`, `logo`)
 

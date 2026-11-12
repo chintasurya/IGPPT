@@ -49,6 +49,7 @@ For a PM presenting a project, or one slide per project in a portfolio deck. Sta
 10. stats: outcomes so far (optional; measured results only)
 11. closing
 For a portfolio deck: title, agenda, then one `snapshot` per project, closing.
+When the project has a Deal of Delivery (DOD) register row, use `examples/project-spotlight-dod-template.json`: tiles from the DOD (practice, team, ACV, TCV), a two-column Deal of Delivery card with the DOD people, spread and margins, and the PM fills in project length, problem, scope, technologies and how the need was found. Convert amounts written with Indian digit grouping ($9,51,933) to US form ($951,933).
 
 ## Product or tool demo (6 to 9 slides)
 title, agenda, cards (what it is: 4 capabilities), stats (where it helps, as percentages), cards (the scenarios you will show: ticket, fix, result), section "LIVE DEMO" (leave on screen while switching), stats or bullets (recap), timeline or process (next steps), closing. Put every explanatory slide before the live part so the presenter switches screens once.

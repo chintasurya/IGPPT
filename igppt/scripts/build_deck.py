@@ -366,21 +366,31 @@ def s_snapshot(deck, s, i):
         y += h + 0.2
     if not cards:
         return
-    per_row = 2 if len(cards) in (2, 4) else min(3, len(cards))
-    rows = math.ceil(len(cards) / per_row)
+    spans = [max(1, int(cd.get("span", 1))) for cd in cards]
+    units = sum(spans)
+    per_row = 2 if units in (2, 4) else min(3, units)
+    spans = [min(sp, per_row) for sp in spans]
+    place, r, col_ = [], 0, 0          # (row, first column) for each card; a card never splits across rows
+    for sp in spans:
+        if col_ + sp > per_row:
+            r, col_ = r + 1, 0
+        place.append((r, col_)); col_ += sp
+    rows = r + 1
     w, xs = columns(per_row)
     h = (bottom - y - 0.2 * (rows - 1)) / rows
     # one body size for every card, so the cards read as a set
     size = 12.0
-    for card in cards:
+    for card, sp in zip(cards, spans):
+        cw = w * sp + 0.2 * (sp - 1)
         if card.get("bullets"):
-            size = min(size, bullet_fit(card["bullets"], w - 0.44, h - 0.84, 12, 9, gap=3))
+            size = min(size, bullet_fit(card["bullets"], cw - 0.44, h - 0.84, 12, 9, gap=3))
         elif card.get("text"):
-            size = min(size, fit_size(card["text"], w - 0.44, h - 0.84, 12, 9))
-    for k, card in enumerate(cards):
-        x, yy = xs[k % per_row], y + (k // per_row) * (h + 0.2)
+            size = min(size, fit_size(card["text"], cw - 0.44, h - 0.84, 12, 9))
+    for k, (card, sp, (row, col0)) in enumerate(zip(cards, spans, place)):
+        x, yy = xs[col0], y + row * (h + 0.2)
+        cw = w * sp + 0.2 * (sp - 1)
         col = color_of(card, k)
-        c.card(x, yy, w, h, border=col if card.get("highlight") else None)
+        c.card(x, yy, cw, h, border=col if card.get("highlight") else None)
         icon = card.get("icon")
         if icon and icon not in icon_names():
             warn(i, f"unknown icon '{icon}', used a number instead"); icon = None
@@ -388,22 +398,43 @@ def s_snapshot(deck, s, i):
             c.icon_circle(x + 0.22, yy + 0.18, 0.42, col, icon)
         else:
             c.oval(x + 0.22, yy + 0.18, 0.42, fill=col, text=str(k + 1), text_size=13)
-        tag_w = 1.0 if card.get("tag") else 0
-        if tag_w:
-            c.chip(x + w - tag_w - 0.22, yy + 0.25, tag_w, card["tag"], col)
+        tag_w = 0
+        if card.get("tag"):
+            tag = str(card["tag"])
+            tag_w = max(1.0, ig_metrics.text_width(tag.upper(), 8, "bold", 1.0) + 0.4)
+            tcol = color_of({"color": card["tag_color"]}, k) if card.get("tag_color") else col
+            c.chip(x + cw - tag_w - 0.22, yy + 0.25, tag_w, tag, tcol)
         title = card.get("title", "")
-        tw = w - 0.8 - 0.22 - (tag_w + 0.15 if tag_w else 0)
+        tw = cw - 0.8 - 0.22 - (tag_w + 0.15 if tag_w else 0)
         c.text(x + 0.8, yy + 0.18, tw, 0.42, title, size=one_line_size(title, tw, 14, 10.5, bold=True), bold=True, valign="middle")
         by, bh = yy + 0.7, h - 0.7 - 0.14
-        if card.get("chips"):
-            left = pills(c, x + 0.22, by, w - 0.44, bh, card["chips"])
+        if card.get("fields"):
+            fields_grid(c, i, k, x + 0.22, yy + 0.68, cw - 0.44, h - 0.68 - 0.1, card["fields"], card.get("columns", 4))
+        elif card.get("chips"):
+            left = pills(c, x + 0.22, by, cw - 0.44, bh, card["chips"])
             if left:
                 warn(i, f"{left} tag(s) did not fit in card {k + 1}: use fewer or shorter tags", fatal=True)
         elif card.get("bullets"):
-            c.bullets(x + 0.22, by, w - 0.44, bh, card["bullets"], size=size, color=c.t.muted, gap=3)
+            c.bullets(x + 0.22, by, cw - 0.44, bh, card["bullets"], size=size, color=c.t.muted, gap=3)
         elif card.get("text"):
-            c.text(x + 0.22, by, w - 0.44, bh, card["text"], size=size, color=c.t.muted)
+            c.text(x + 0.22, by, cw - 0.44, bh, card["text"], size=size, color=c.t.muted)
 
+
+def fields_grid(c, i, k, x, y, w, h, fields, cols=4):
+    """Label-and-value pairs in a grid, e.g. the people and figures from a Deal of Delivery record."""
+    cols = max(1, min(int(cols), len(fields)))
+    fw = (w - 0.2 * (cols - 1)) / cols
+    rows = math.ceil(len(fields) / cols)
+    pitch = min(0.5, h / rows)
+    if pitch < 0.38:
+        warn(i, f"{len(fields)} fields do not fit in card {k + 1}: use fewer fields or more columns", fatal=True)
+        return
+    for n, f in enumerate(fields):
+        fx, fy = x + (n % cols) * (fw + 0.2), y + (n // cols) * pitch
+        label, value = str(f.get("label", "")).upper(), str(f.get("value", ""))
+        c.text(fx, fy, fw, 0.36, [
+            {"text": label, "size": 8, "bold": True, "color": c.t.muted, "spacing": 1, "br": True},
+            {"text": value, "size": one_line_size(value, fw, 11.5, 9, bold=True), "bold": True}])
 
 TYPES = {"title": s_title, "agenda": s_agenda, "section": s_section, "statement": s_statement, "quote": s_statement,
          "closing": s_closing, "bullets": s_bullets, "cards": s_cards, "stats": s_stats, "process": s_process,

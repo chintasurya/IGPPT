@@ -68,7 +68,7 @@ def _():
 
 @test("project spotlight template and sample build and pass")
 def _():
-    for name in ("project-spotlight-template", "project-spotlight-sample"):
+    for name in ("project-spotlight-template", "project-spotlight-sample", "project-spotlight-dod-template"):
         spec = ROOT / "igppt" / "examples" / f"{name}.json"
         code, out = run(SCRIPTS / "make_deck.py", spec, TMP / f"{name}.pptx", "--no-fix")
         expect(code == 0 and "SAVED" in out, f"{name} should pass", out)

@@ -1,0 +1,123 @@
+{
+ "theme": "dark",
+ "slides": [
+  {
+   "type": "snapshot",
+   "title": "[Client]: [Project Name]",
+   "eyebrow": "Project Spotlight | Template",
+   "subtitle": "[Client legal name] | [Practice] practice | PM: [Name] | DOD stage: [Stage] | [Start] to [End]",
+   "stats": [
+    {
+     "value": "[Practice]",
+     "label": "Practice",
+     "text": "[Project or offering]"
+    },
+    {
+     "value": "[X] FTE",
+     "label": "Team size",
+     "text": "[X] planned, [X] on board"
+    },
+    {
+     "value": "[X] mo",
+     "label": "Project length",
+     "text": "[Start] to [end]"
+    },
+    {
+     "value": "$[XXX]K",
+     "label": "ACV",
+     "text": "$[XXX,XXX] from the DOD"
+    },
+    {
+     "value": "$[XXX]K",
+     "label": "TCV",
+     "text": "$[XXX,XXX] from the DOD"
+    }
+   ],
+   "cards": [
+    {
+     "icon": "warning",
+     "title": "Customer Problem",
+     "highlight": true,
+     "bullets": [
+      "[What the client needed fixed, and why]",
+      "[Who it affected and how much]",
+      "[Why now: release, rollout, deadline]"
+     ]
+    },
+    {
+     "icon": "route",
+     "title": "Scope",
+     "bullets": [
+      "In: [main deliverable]",
+      "In: [second deliverable]",
+      "Out: [what we are not doing]"
+     ]
+    },
+    {
+     "icon": "code",
+     "title": "Technologies",
+     "chips": [
+      "[Platform]",
+      "[Language]",
+      "[Test tool]",
+      "[Automation]",
+      "[Tracker]"
+     ]
+    },
+    {
+     "icon": "search",
+     "title": "How We Found the Need",
+     "bullets": [
+      "[Trigger: account review, RFP, client ask]",
+      "[Discovery: interviews, workshops, data]",
+      "[Who signed off the business case]"
+     ]
+    },
+    {
+     "icon": "clipboard-check",
+     "title": "Deal of Delivery",
+     "span": 2,
+     "color": "orange",
+     "highlight": true,
+     "tag": "DOD: [Stage]",
+     "tag_color": "green",
+     "fields": [
+      {
+       "label": "Delivery lead",
+       "value": "[Name]"
+      },
+      {
+       "label": "Project manager",
+       "value": "[Name]"
+      },
+      {
+       "label": "Account manager",
+       "value": "[Name]"
+      },
+      {
+       "label": "Account executive",
+       "value": "[Name]"
+      },
+      {
+       "label": "Team: plan / now",
+       "value": "[X] / [X]"
+      },
+      {
+       "label": "Weekly spread",
+       "value": "$[X,XXX]"
+      },
+      {
+       "label": "GP margin, planned",
+       "value": "[XX.X%]"
+      },
+      {
+       "label": "GP margin, actual",
+       "value": "[XX.X%]"
+      }
+     ]
+    }
+   ],
+   "notes": "TEMPLATE: copy this slide once per project and replace every [placeholder]. From the DOD register: practice (column 1), client (2), project (3), DOD stage (4), delivery lead (5), project manager (6), account manager (7), account executive (8), team planned and on board (9, 10), ACV (11), TCV (12), weekly spread (13), GP margin planned and actual (14, 15). The PM adds the rest: project length, customer problem, scope, technologies (up to 5 tags), and how the need was found. Keep the title to one line, 45 characters or fewer. Write amounts in US form ($951,933, not $9,51,933)."
+  }
+ ]
+}

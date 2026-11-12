@@ -33,4 +33,4 @@ etc e.g i.e vs approx misc info admin admins config configs repo repos dev devs 
 wfh hr faq faqs eta asap fyi
 
 # Project spotlight vocabulary
-app apps workflow workflows triage onshore offshore ACV TCV DOD
+app apps workflow workflows triage onshore offshore rollout rollouts ACV TCV DOD

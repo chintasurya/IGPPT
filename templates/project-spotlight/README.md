@@ -6,8 +6,10 @@ A standard way for every PM to present a project on the Insight Global template.
 |---|---|
 | `Project-Spotlight-Template.pptx` | The master deck: blank, with `[square-bracket]` placeholders and field guidance in the speaker notes |
 | `Project-Spotlight-Sample.pptx` | The same deck filled in for a **fictional** project, to show the expected detail. Do not reuse its names or figures |
+| `Project-Spotlight-DOD-Template.pptx` | One blank snapshot slide laid out for a Deal of Delivery (DOD) register row: the DOD people, spread and margins in a two-column card. Field-by-column guidance is in the speaker notes |
 | `../../igppt/examples/project-spotlight-template.json` | The template as an IGPPT spec, for building a deck with the IGPPT assistant |
 | `../../igppt/examples/project-spotlight-sample.json` | The sample as an IGPPT spec |
+| `../../igppt/examples/project-spotlight-dod-template.json` | The DOD snapshot slide as an IGPPT spec |
 
 ## What the snapshot slide covers
 
