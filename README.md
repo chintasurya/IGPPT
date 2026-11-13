@@ -23,6 +23,7 @@ It follows the open Agent Skills format (a folder with `SKILL.md`), so the same 
 | `igppt/scripts/init.py` | One-time project set-up and self-test |
 | `igppt/scripts/check_deck.py` | Older name for `validate.py` |
 | `igppt/scripts/learn.py`, `igppt/assets/lessons.json` | Lessons learned from feedback, checked on every build |
+| `igppt/scripts/claude_hook.py`, `.claude/settings.json`, `CLAUDE.md` | Claude Code: lessons at session start, feedback detection, "always use IGPPT" rule |
 | `tools/merge_lessons.py` | Makes lessons from users' `igppt-lessons.json` files permanent in the skill |
 | `igppt/scripts/spellchecker`, `igppt/assets/spell-en.json` | Bundled spell checker and English dictionary (pyspellchecker, MIT), so no install is needed |
 | `igppt/assets/wordlist.txt` | Business and technology words the spell check accepts |
@@ -193,7 +194,7 @@ Microsoft 365 Copilot wipes the agent's working folder after every chat, so less
 2. **GitHub**: when the sandbox has internet, `start` downloads `igppt/assets/lessons.json` from this repository, so merged lessons apply without re-uploading the skill.
 3. **The skill itself**: `python tools/merge_lessons.py <block.txt or igppt-lessons.json>`, then run the tests, `python tools/build_zips.py`, commit, and re-upload `igppt-m365-skill.zip`.
 
-In VS Code or Claude Code, lessons are saved in the project's `igppt-lessons.json` and apply at once. Feedback that no rule can express is stored as `guidance`, which the agent reads before every deck but the code cannot enforce. Fully automatic sharing (the agent writing lessons to SharePoint for everyone) needs Copilot Studio with a Power Automate flow.
+**In Claude Code (or any git repository) learning is automatic and kept in git.** `learn.py add ... --commit` saves the lesson in `igppt-lessons.json` at the repository root (in this source repository: `igppt/assets/lessons.json`, so it ships to everyone) and commits it; every later session and every teammate who pulls gets it, and nothing is pushed without being asked. Two Claude Code hooks in `.claude/settings.json` (installed by `init.py`; this repository has them too) list the lessons at the start of every session and flag messages that look like feedback on a deck, so Claude records and commits the lesson before replying. `CLAUDE.md` tells Claude Code to use IGPPT for every deck. Feedback that no rule can express is stored as `guidance`, which the agent reads before every deck but the code cannot enforce. Fully automatic sharing (the agent writing lessons to SharePoint for everyone) needs Copilot Studio with a Power Automate flow.
 
 ## Proposal review skill
 

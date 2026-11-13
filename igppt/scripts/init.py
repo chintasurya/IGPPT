@@ -11,7 +11,8 @@ It:
   4. adds starter prompts as slash commands (/igppt, /igppt-quarterly, /igppt-from-notes, /igppt-proposal,
      /igppt-update-deck) for Copilot Chat (.github/prompts) and Claude Code (.claude/commands),
   5. turns on agent skills in VS Code for this project (.vscode/settings.json),
-  6. adds igppt-words.txt for client and product names the spell check should accept,
+  6. adds igppt-words.txt for client and product names the spell check should accept, and Claude Code hooks
+     (.claude/settings.json) that list the lessons at session start and spot feedback on a deck,
   7. builds and validates a test deck to prove everything works.
 Safe to run again: it updates its own sections and leaves everything else alone.
 """
@@ -114,6 +115,7 @@ For ANY request to create, make, draft or update a presentation, deck, slides, P
 4. On FAIL, each problem names the spec field to change. Edit the spec and run the same command again until it prints SAVED. Fix problems yourself.
 5. Correct names the spell check does not know go in `igppt-words.txt`. Never add a misspelling.
 6. Reply with the .pptx, the slide list and any assumptions.
+7. Learning from feedback: when the user says a deck is wrong or gives a rule ("don't", "never", "always"), record it with `python {rel(SCRIPTS / 'learn.py', root)} add --kind ... --mistake "..." --fix "..." --feedback "<their words>" --spec <spec>.json --commit`, fix the spec and rebuild until SAVED. The lesson is saved in `igppt-lessons.json` at the repository root and committed, so every later session and teammate gets it. Follow every lesson `learn.py list` shows.
 
 Never write your own python-pptx, pptxgenjs, HTML or Office code for slides, never start from a blank or default PowerPoint, and never edit the .pptx by hand: that loses the Insight Global template, fonts and layout, and `{val}` rejects it. The IG template is bundled; never ask for one."""
     for f in (root / ".github" / "copilot-instructions.md", root / "AGENTS.md", root / "CLAUDE.md"):
@@ -137,6 +139,25 @@ Never write your own python-pptx, pptxgenjs, HTML or Office code for slides, nev
         cc.write_text(f"---\ndescription: {desc}\n---\n{text}\n\n{rules}\n\nRequest: $ARGUMENTS\n", encoding="utf-8")
     say(True, "starter prompts added: " + ", ".join("/" + n for n, *_ in PROMPTS)
         + " (.github/prompts for Copilot, .claude/commands for Claude Code)")
+
+    # 4b. Claude Code hooks: list the lessons at session start, spot feedback on a deck in each message
+    hook = rel(SCRIPTS / "claude_hook.py", root)
+    cmds = {"SessionStart": f'(python3 "$CLAUDE_PROJECT_DIR/{hook}" session || python "$CLAUDE_PROJECT_DIR/{hook}" session) 2>/dev/null || true',
+            "UserPromptSubmit": (f'IN="$(cat)"; (printf \'%s\' "$IN" | python3 "$CLAUDE_PROJECT_DIR/{hook}" prompt || '
+                                 f'printf \'%s\' "$IN" | python "$CLAUDE_PROJECT_DIR/{hook}" prompt) 2>/dev/null || true')}
+    cs = root / ".claude" / "settings.json"
+    try:
+        data = json.loads(cs.read_text(encoding="utf-8")) if cs.exists() else {}
+        hooks = data.setdefault("hooks", {})
+        for event, cmd in cmds.items():
+            groups = hooks.setdefault(event, [])
+            groups[:] = [g for g in groups if not any("claude_hook.py" in h.get("command", "") for h in g.get("hooks", []))]
+            groups.append({"hooks": [{"type": "command", "command": cmd, "timeout": 30 if event == "SessionStart" else 15}]})
+        cs.parent.mkdir(exist_ok=True)
+        cs.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+        say(True, "Claude Code learning hooks added (.claude/settings.json)")
+    except (json.JSONDecodeError, OSError, AttributeError):
+        say(False, "could not update .claude/settings.json (not valid JSON); add the IGPPT hooks by hand (see README)")
 
     # 5. VS Code: make sure agent skills are on for this project
     vs = root / ".vscode" / "settings.json"

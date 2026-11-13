@@ -97,6 +97,7 @@
   "igppt/requirements.txt",
   "igppt/scripts/build_deck.py",
   "igppt/scripts/check_deck.py",
+  "igppt/scripts/claude_hook.py",
   "igppt/scripts/deck_text.py",
   "igppt/scripts/ig_kit.py",
   "igppt/scripts/ig_metrics.py",

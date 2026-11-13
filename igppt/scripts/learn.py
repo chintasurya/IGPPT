@@ -2,7 +2,7 @@
 
     python learn.py start                                  start of every chat: load shared lessons, then list them
     python learn.py list                                   show every lesson in force
-    python learn.py add --kind <kind> [options] --mistake "..." --fix "..." --feedback "user's words" [--spec deck.json]
+    python learn.py add --kind <kind> [options] --mistake "..." --fix "..." --feedback "user's words" [--spec deck.json] [--commit]
     python learn.py test deck.json                         check a spec against the lessons (exit 1 on FAIL)
     python learn.py export [--all]                         print the lessons as a block to paste into the agent's instructions
     python learn.py import <file> [...]                    load lessons from a JSON file or any text containing a block
@@ -35,6 +35,10 @@ How lessons survive from one chat to the next (Microsoft 365 Copilot wipes the s
      lessons merged there (tools/merge_lessons.py) reach every chat without re-uploading the skill.
   3. Files: an igppt-lessons.json (or any text file with a block) attached to the chat is loaded by `start`.
   4. The skill itself: assets/lessons.json, updated by the owner with tools/merge_lessons.py and a re-upload.
+
+In a git repository (Claude Code, VS Code) lessons are saved to igppt-lessons.json at the repository root (in the
+IGPPT source repository: igppt/assets/lessons.json) and `--commit` commits them, so every later session and every
+teammate who pulls gets them. Nothing is ever pushed automatically.
 
 Where lessons are read from (all are combined): <skill>/assets/lessons.json, the data folder ($IGPPT_DATA,
 default /mnt/data) igppt-lessons.json and igppt-lessons-shared.json, igppt-lessons.json next to the spec and in
@@ -70,6 +74,9 @@ def lesson_files(spec_dir=None):
     if spec_dir:
         files.append(Path(spec_dir) / "igppt-lessons.json")
     files += [Path.cwd() / "igppt-lessons.json", Path.cwd() / "igppt-lessons-shared.json"]
+    root = git_root()
+    if root:
+        files.append(root / "igppt-lessons.json")
     out = []
     for f in files:
         try:
@@ -81,13 +88,35 @@ def lesson_files(spec_dir=None):
     return out
 
 
+def git_root(start=None):
+    """The git work tree containing `start` (default: the current folder), or None."""
+    p = Path(start or Path.cwd()).resolve()
+    for d in [p, *p.parents]:
+        if (d / ".git").exists():
+            return d
+    return None
+
+
+def is_source_repo():
+    """True when this skill is the IGPPT source repository itself (igppt/ next to tools/merge_lessons.py)."""
+    root = SKILL.parent
+    return (root / ".git").exists() and (root / "tools" / "merge_lessons.py").is_file() and os.access(BUNDLED.parent, os.W_OK)
+
+
 def save_target():
+    """Where a new lesson is saved:
+    $IGPPT_LESSONS; else the hosted data folder (Microsoft 365 Copilot, ChatGPT: /mnt/data); else, in the IGPPT
+    source repository, the skill's own assets/lessons.json (ships to everyone); else igppt-lessons.json at the root of
+    the git repository you are working in (Claude Code, VS Code; commit it); else the current folder."""
     env = os.environ.get("IGPPT_LESSONS")
     if env:
         return Path(env)
     if DATA.is_dir() and os.access(DATA, os.W_OK):
         return DATA / "igppt-lessons.json"
-    return Path.cwd() / "igppt-lessons.json"
+    if is_source_repo():
+        return BUNDLED
+    root = git_root()
+    return (root or Path.cwd()) / "igppt-lessons.json"
 
 
 def data_dir():
@@ -286,6 +315,9 @@ def cmd_add(args):
     if mx:
         l["max"] = int(mx)
     spec_for_test = opt(args, "--spec")
+    do_commit = "--commit" in args
+    if do_commit:
+        args.remove("--commit")
     target = Path(opt(args, "--save") or save_target())
     if kind in ("banned_text", "required_text") and l.get("word"):
         l["pattern_from"] = "word"
@@ -333,9 +365,32 @@ def cmd_add(args):
         caught = check(spec, [l])
         print(("It catches the reported mistake in " if caught else "WARNING: it does NOT catch anything in ")
               + f"{spec_for_test}" + (f": {caught[0][2][:140]}" if caught else "; make the rule match the mistake."))
-    print("Next: run `python learn.py export` and give the user the block it prints, so the agent owner can paste it "
-          "into the agent's instructions and the lesson applies in every future chat.")
+    root = git_root(target.parent)
+    if root and not str(target).startswith(str(DATA)):
+        if do_commit:
+            commit_lesson(root, target, l)
+        else:
+            print(f"Commit it so every future session and teammate gets it: git add \"{target}\" && "
+                  f"git commit -m \"IGPPT lesson {l['id']}: {l.get('mistake') or l.get('text', '')[:60]}\"  (or rerun with --commit)")
+    else:
+        print("Next: run `python learn.py export` and give the user the lessons file it writes (igppt-lessons/SKILL.md), "
+              "so the agent owner can upload it and the lesson applies in every future chat.")
     return 0
+
+
+def commit_lesson(root, target, lesson):
+    """git add + git commit the lessons file (never pushes)."""
+    import subprocess
+    msg = f"IGPPT lesson {lesson['id']}: {(lesson.get('mistake') or lesson.get('text', ''))[:70]}"
+    if lesson.get("feedback"):
+        msg += f"\n\nFeedback: {lesson['feedback'][:300]}"
+    a = subprocess.run(["git", "-C", str(root), "add", str(target)], capture_output=True, text=True)
+    c = subprocess.run(["git", "-C", str(root), "commit", "-m", msg, "--", str(target)], capture_output=True, text=True)
+    if a.returncode == 0 and c.returncode == 0:
+        print(f"COMMITTED to git: {msg.splitlines()[0]}  (push when ready so teammates get it)")
+    else:
+        print(f"Could not commit automatically ({(a.stderr or c.stderr or c.stdout).strip()[:160]}); "
+              f"commit {target} by hand.")
 
 
 def cmd_test(args):
@@ -509,7 +564,7 @@ def cmd_start(args):
 def cmd_remove(args):
     lid = args[0]
     for f in lesson_files(Path.cwd()):
-        if f.is_file() and f != BUNDLED.resolve():
+        if f.is_file() and (f != BUNDLED.resolve() or is_source_repo()):
             data = json.loads(f.read_text(encoding="utf-8"))
             items = data["lessons"] if isinstance(data, dict) else data
             keep = [x for x in items if x.get("id") != lid]

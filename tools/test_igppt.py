@@ -19,6 +19,8 @@ sys.path.insert(0, str(SCRIPTS))
 PY = sys.executable
 TMP = Path(tempfile.mkdtemp(prefix="igppt-test-"))
 results = []
+BUNDLED_LESSONS = ROOT / "igppt" / "assets" / "lessons.json"
+BUNDLED_BEFORE = BUNDLED_LESSONS.read_text(encoding="utf-8")       # tests must leave the real skill's lessons alone
 
 
 def run(*args, cwd=None):
@@ -267,6 +269,41 @@ def _():
                 os.environ[k] = v
 
 
+@test("Claude Code in a git repo: feedback becomes a committed lesson that the next session enforces; hooks fire")
+def _():
+    import os
+    proj = TMP / "gitproj"
+    (proj / "decks").mkdir(parents=True)
+    # install a copy of the skill into the project, as a user's repository has it (never the source repository's own)
+    shutil.copytree(ROOT / "igppt", proj / ".claude" / "skills" / "igppt", ignore=shutil.ignore_patterns("__pycache__"))
+    CS = proj / ".claude" / "skills" / "igppt" / "scripts"
+    old = os.environ.pop("IGPPT_DATA", None)
+    try:
+        os.environ["IGPPT_DATA"] = str(TMP / "no-such-hosted-folder")      # behave like a laptop, not a hosted sandbox
+        for cmd in (["init", "-q"], ["config", "user.email", "t@example.com"], ["config", "user.name", "T"]):
+            subprocess.run(["git", *cmd], cwd=proj, check=True)
+        spec = deck({"type": "bullets", "title": "Staffing And Automation", "bullets": ["Six analysts in 30 days"]})
+        (proj / "decks" / "q3.json").write_text(json.dumps(spec), encoding="utf-8")
+        code, out = run(CS / "learn.py", "add", "--kind", "banned_text", "--scope", "title", "--word", "And", "--match-case",
+                        "--mistake", "Title Case And", "--fix", "lower-case and", "--feedback", "never capitalise And",
+                        "--spec", proj / "decks" / "q3.json", "--commit", cwd=proj)
+        log = subprocess.run(["git", "log", "--oneline"], cwd=proj, capture_output=True, text=True).stdout
+        expect(code == 0 and (proj / "igppt-lessons.json").is_file() and "IGPPT lesson" in log, "lesson saved at repo root and committed", out + log)
+        code, out = run(CS / "make_deck.py", proj / "decks" / "q3.json", proj / "decks" / "q3.pptx", cwd=proj / "decks")
+        expect(code == 1 and "Title Case And" in out, "a new session (from a subfolder) enforces the committed lesson", out)
+        r = subprocess.run([PY, str(CS / "claude_hook.py"), "session"], cwd=proj, capture_output=True, text=True)
+        expect(r.returncode == 0 and "Title Case" not in r.stdout and "Never 'And'" in r.stdout, "session hook lists lessons", r.stdout)
+        for text, want in (("the deck title is wrong, never use And", True), ("what time is the meeting", False)):
+            r = subprocess.run([PY, str(CS / "claude_hook.py"), "prompt"], input=json.dumps({"prompt": text}),
+                               cwd=proj, capture_output=True, text=True)
+            expect(r.returncode == 0 and (("learn.py" in r.stdout) == want), f"prompt hook for {text!r}", r.stdout)
+    finally:
+        if old is None:
+            os.environ.pop("IGPPT_DATA", None)
+        else:
+            os.environ["IGPPT_DATA"] = old
+
+
 # ---------------------------------------------------------------- layout rules
 LONG = ("Moved every release onto the automated pipeline, removed manual approvals, added smoke tests after each deploy, "
         "documented rollback for each service and trained the support team on the new runbook so they own incidents.")
@@ -357,6 +394,9 @@ def main():
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     except Exception:
         pass
+    if BUNDLED_LESSONS.read_text(encoding="utf-8") != BUNDLED_BEFORE:      # a test must never change the real skill
+        BUNDLED_LESSONS.write_text(BUNDLED_BEFORE, encoding="utf-8")
+        results.append((False, "tests left igppt/assets/lessons.json unchanged", "a test wrote to the real lessons file (restored)"))
     for ok, name, why in results:
         print(("PASS  " if ok else "FAIL  ") + name)
         if not ok:

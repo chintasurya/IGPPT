@@ -1,0 +1,26 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "(python3 \"$CLAUDE_PROJECT_DIR/igppt/scripts/claude_hook.py\" session || python \"$CLAUDE_PROJECT_DIR/igppt/scripts/claude_hook.py\" session) 2>/dev/null || true",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "IN=\"$(cat)\"; (printf '%s' \"$IN\" | python3 \"$CLAUDE_PROJECT_DIR/igppt/scripts/claude_hook.py\" prompt || printf '%s' \"$IN\" | python \"$CLAUDE_PROJECT_DIR/igppt/scripts/claude_hook.py\" prompt) 2>/dev/null || true",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}
