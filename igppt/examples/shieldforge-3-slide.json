@@ -1,0 +1,27 @@
+{
+  "theme": "dark",
+  "slides": [
+    {"type": "title", "title": "ShieldForge SOC Solution Design", "subtitle": "Managed SOC staffing and automation", "date": "November 2026"},
+    {"type": "stats", "eyebrow": "The challenge", "title": "Alert Volume Is Outpacing the Team",
+     "subtitle": "Alerts grew 60% this year and hiring cannot keep up",
+     "stats": [
+       {"value": "4,500", "label": "Alerts per day", "text": "Up 60% year over year."},
+       {"value": "38 min", "label": "Average response", "text": "Target is under 15 minutes."},
+       {"value": "9", "label": "Open analyst roles", "text": "74 days on average to fill."},
+       {"value": "22%", "label": "Analyst attrition", "text": "Burnout drove it last year."}],
+     "note": "Figures supplied by ShieldForge for this proposal."},
+    {"type": "process", "eyebrow": "Our solution", "title": "Three Phases to a Stable SOC",
+     "steps": [
+       {"title": "Staff the gap", "owner": "Month 1", "text": "Place 6 certified SOC analysts within 30 days.", "icon": "users"},
+       {"title": "Automate triage", "owner": "Months 2-3", "text": "Automate triage for the top 20 alert types.", "icon": "cogs"},
+       {"title": "Hand over", "owner": "Months 4-6", "text": "Hand over runbooks and train the ShieldForge team.", "icon": "handshake"}],
+     "highlight": 1},
+    {"type": "cards", "eyebrow": "Results and next steps", "title": "Faster Response Within Six Months",
+     "cards": [
+       {"value": "<15 min", "title": "Response time", "text": "Down from 38 minutes today."},
+       {"value": "40%", "title": "Fewer alerts to analysts", "text": "After triage automation."},
+       {"value": "60 days", "title": "All 9 roles filled", "text": "Through Insight Global staffing."}],
+     "note": "Next step: 45-minute scoping call with the CISO the week of 16 November; decision needed by 30 November."},
+    {"type": "closing"}
+  ]
+}

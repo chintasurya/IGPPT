@@ -30,4 +30,5 @@ Postgres PostgreSQL MySQL MongoDB Redis Kafka Spark Hadoop Linux Windows macOS i
 SAP Oracle Dynamics NetSuite Coupa Ariba Guidewire Epic Cerner
 # common abbreviations
 etc e.g i.e vs approx misc info admin admins config configs repo repos dev devs prod qa uat
+maths
 wfh hr faq faqs eta asap fyi

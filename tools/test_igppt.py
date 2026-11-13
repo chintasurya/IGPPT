@@ -115,6 +115,158 @@ def _():
     expect(code == 1 and "repeated word" in out and "lorem ipsum" in out.lower(), "both must fail", out)
 
 
+@test("internal or presenter notes on a slide fail; speaker notes are fine")
+def _():
+    spec = deck({"type": "bullets", "title": "Where We Are", "bullets": ["On track"],
+                 "note": "Audience: CISO and IT Director. Next step is scoping."})
+    code, out, _ = make(spec, "internal")
+    expect(code == 1 and "internal or presenter note" in out and "slides[1].note" in out, "on-slide audience note must fail", out)
+    spec["slides"][1]["notes"] = spec["slides"][1].pop("note")
+    code, out, _ = make(spec, "internal")
+    expect(code == 0, "the same text in speaker notes must pass", out)
+
+
+@test("common icon names map to the bundled icons")
+def _():
+    import build_deck
+    expect(build_deck.resolve_icon(1, "people") == "users" and build_deck.resolve_icon(1, "gear") == "cogs"
+           and build_deck.resolve_icon(1, "Security") == "shield" and build_deck.resolve_icon(1, "rockets") == "rocket",
+           "aliases should resolve")
+    code, out, _ = make(deck({"type": "process", "title": "How Work Flows", "steps": [
+        {"title": "Staff", "text": "Place analysts.", "icon": "people"}, {"title": "Automate", "text": "Triage.", "icon": "gear"}]}), "icons")
+    expect(code == 0 and "unknown icon" not in out, "aliased icons should build without warnings", out)
+
+
+@test("a lesson learned from feedback stops the same mistake, then merges into the skill")
+def _():
+    import os
+    lessons = TMP / "igppt-lessons.json"
+    spec = deck({"type": "bullets", "title": "Staffing And Automation", "bullets": ["Six analysts in 30 days"]})
+    path = TMP / "lesson.json"
+    path.write_text(json.dumps(spec), encoding="utf-8")
+    code, out = run(SCRIPTS / "learn.py", "add", "--kind", "banned_text", "--scope", "title", "--pattern", r"\bAnd\b",
+                    "--match-case", "--mistake", "Title Case And", "--fix", "lower-case and", "--feedback", "test",
+                    "--spec", path, "--save", lessons)
+    expect(code == 0 and "It catches the reported mistake" in out, "lesson should be saved and catch the mistake", out)
+    code, out = run(SCRIPTS / "make_deck.py", path, TMP / "lesson.pptx")
+    expect(code == 1 and "lesson L" in out and not (TMP / "lesson.pptx").exists(), "the same mistake must now fail", out)
+    spec["slides"][1]["title"] = "Staffing and Automation"
+    path.write_text(json.dumps(spec), encoding="utf-8")
+    code, out = run(SCRIPTS / "make_deck.py", path, TMP / "lesson.pptx")
+    expect(code == 0, "the corrected deck must pass", out)
+    for bad in (["--kind", "banned_text", "--pattern", "([", "--mistake", "x", "--fix", "y"], ["--kind", "nonsense"]):
+        code, out = run(SCRIPTS / "learn.py", "add", *bad, "--save", TMP / "bad-lessons.json")
+        expect(code == 2, "invalid lessons must be refused", out)
+    bundled = ROOT / "igppt" / "assets" / "lessons.json"
+    before = bundled.read_text(encoding="utf-8")
+    try:
+        code, out = run(ROOT / "tools" / "merge_lessons.py", lessons)
+        expect(code == 0 and "Added 1 lesson" in out and "Title Case And" in bundled.read_text(encoding="utf-8"), "merge", out)
+        lessons.unlink()
+        code, out = run(SCRIPTS / "learn.py", "test", path)
+        expect(code == 0, "merged lesson is now bundled and the fixed spec passes", out)
+    finally:
+        bundled.write_text(before, encoding="utf-8")
+        lessons.unlink(missing_ok=True)
+
+
+@test("lessons survive into a new chat through the instructions block, and a damaged block is rejected")
+def _():
+    import os
+    chat1, chat2, chat3 = TMP / "chat1", TMP / "chat2", TMP / "chat3"
+    for c in (chat1, chat2, chat3):
+        c.mkdir()
+    spec = deck({"type": "bullets", "title": "Staffing And Automation", "bullets": ["Six analysts in 30 days"]})
+    path = TMP / "chat-spec.json"
+    path.write_text(json.dumps(spec), encoding="utf-8")
+    old = os.environ.get("IGPPT_DATA")
+    try:
+        os.environ["IGPPT_DATA"] = str(chat1)
+        code, out = run(SCRIPTS / "learn.py", "add", "--kind", "banned_text", "--scope", "title", "--word", "And", "--match-case",
+                        "--mistake", "Title Case And", "--fix", "lower-case and", "--spec", path, cwd=chat1)
+        expect(code == 0 and "It catches" in out, "learn in chat 1", out)
+        code, out = run(SCRIPTS / "learn.py", "export", cwd=chat1)
+        block = out[out.index("<<<IGPPT-LESSONS"):out.index("IGPPT-LESSONS>>>") + len("IGPPT-LESSONS>>>")]
+        expect("\\" not in block, "a --word lesson has no backslashes to mis-copy", block)
+        os.environ["IGPPT_DATA"] = str(chat2)
+        (chat2 / "igppt-lessons-block.txt").write_text("Instructions...\n" + block + "\n", encoding="utf-8")
+        code, out = run(SCRIPTS / "learn.py", "start", "--url", (ROOT / "igppt" / "assets" / "lessons.json").as_uri(), cwd=chat2)
+        expect(code == 0 and "Loaded 1 lesson" in out and "Shared lessons downloaded: 0" in out, "start loads the block and syncs", out)
+        code, out = run(SCRIPTS / "make_deck.py", path, chat2 / "x.pptx", cwd=chat2)
+        expect(code == 1 and "Title Case And" in out, "the lesson blocks the mistake in a new chat", out)
+        os.environ["IGPPT_DATA"] = str(chat3)
+        (chat3 / "igppt-lessons-block.txt").write_text(block.replace("lower-case", "lowercase"), encoding="utf-8")
+        code, out = run(SCRIPTS / "learn.py", "start", "--url", "file:///no/such/file", cwd=chat3)
+        expect("checksum does not match" in out and "Loaded 0 lesson" in out and "not downloaded" in out, "damaged block", out)
+    finally:
+        if old is None:
+            os.environ.pop("IGPPT_DATA", None)
+        else:
+            os.environ["IGPPT_DATA"] = old
+
+
+@test("igppt.py start / build / verify: one command each, with a check report and a validation stamp")
+def _():
+    import os
+    work = TMP / "agent"
+    work.mkdir()
+    old = os.environ.get("IGPPT_DATA")
+    os.environ["IGPPT_DATA"] = str(work)
+    try:
+        code, out = run(SCRIPTS / "igppt.py", "start", cwd=work)
+        expect(code == 0 and "READY" in out and "igppt.py build" in out, "start should print READY and the commands", out)
+        spec = work / "deck.json"
+        spec.write_text((ROOT / "igppt" / "examples" / "shieldforge-3-slide.json").read_text(encoding="utf-8"), encoding="utf-8")
+        code, out = run(SCRIPTS / "igppt.py", "build", spec, work / "SF.pptx", cwd=work)
+        report = work / "SF - IGPPT check.txt"
+        expect(code == 0 and report.is_file() and "IGPPT validated PASS" in report.read_text(encoding="utf-8"), "build + report", out)
+        code, out = run(SCRIPTS / "igppt.py", "verify", work / "SF.pptx", cwd=work)
+        expect(code == 0 and "Built by IGPPT: yes" in out and "IGPPT validated PASS" in out and "PASS:" in out, "verify good", out)
+        from pptx import Presentation
+        plain = Presentation(); plain.slides.add_slide(plain.slide_layouts[5]).shapes.title.text = "Q3"
+        plain.save(work / "handmade.pptx")
+        code, out = run(SCRIPTS / "igppt.py", "verify", work / "handmade.pptx", cwd=work)
+        expect(code == 1 and "Built by IGPPT: NO" in out, "verify must reject a deck not built by IGPPT", out)
+    finally:
+        if old is None:
+            os.environ.pop("IGPPT_DATA", None)
+        else:
+            os.environ["IGPPT_DATA"] = old
+
+
+@test("feedback becomes an igppt-lessons skill file that a new chat loads from the skills folder")
+def _():
+    import os
+    skills = TMP / "skills"
+    (skills / "igppt-lessons").mkdir(parents=True)
+    c1, c2 = TMP / "lchat1", TMP / "lchat2"
+    c1.mkdir(); c2.mkdir()
+    spec = deck({"type": "bullets", "title": "Staffing And Automation", "bullets": ["Six analysts in 30 days"]})
+    path = TMP / "lskill-spec.json"
+    path.write_text(json.dumps(spec), encoding="utf-8")
+    old = {k: os.environ.get(k) for k in ("IGPPT_DATA", "IGPPT_SKILLS_DIR")}
+    try:
+        os.environ["IGPPT_DATA"] = str(c1)
+        run(SCRIPTS / "learn.py", "add", "--kind", "banned_text", "--scope", "title", "--word", "And", "--match-case",
+            "--mistake", "Title Case And", "--fix", "lower-case and", cwd=c1)
+        code, out = run(SCRIPTS / "learn.py", "export", cwd=c1)
+        md = c1 / "igppt-lessons" / "SKILL.md"
+        expect(code == 0 and md.is_file() and md.read_text(encoding="utf-8").startswith("---\nname: igppt-lessons")
+               and (c1 / "igppt-lessons-skill.zip").is_file(), "export writes the lessons skill", out)
+        shutil.copy(md, skills / "igppt-lessons" / "SKILL.md")
+        os.environ.update(IGPPT_DATA=str(c2), IGPPT_SKILLS_DIR=str(skills))
+        code, out = run(SCRIPTS / "learn.py", "start", "--url", "file:///no/such/file", cwd=c2)
+        expect("Loaded 1 lesson(s) from the 'igppt-lessons' skill" in out, "start loads the lessons skill", out)
+        code, out = run(SCRIPTS / "make_deck.py", path, c2 / "x.pptx", cwd=c2)
+        expect(code == 1 and "Title Case And" in out, "the lesson is enforced in the new chat", out)
+    finally:
+        for k, v in old.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+
+
 # ---------------------------------------------------------------- layout rules
 LONG = ("Moved every release onto the automated pipeline, removed manual approvals, added smoke tests after each deploy, "
         "documented rollback for each service and trained the support team on the new runbook so they own incidents.")

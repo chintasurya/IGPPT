@@ -35,6 +35,53 @@ def color_of(item, k):
     return named.get(str(c).lower(), c) if c else ACCENTS[k % len(ACCENTS)]
 
 
+# Common names assistants use for icons, mapped to the bundled icon set (assets/icons).
+ICON_ALIASES = {
+    "people": "users", "team": "users", "teams": "users", "group": "users", "staff": "users", "person": "user-check",
+    "user": "user-check", "employee": "user-check", "analyst": "user-check", "talent": "user-plus", "hire": "user-plus",
+    "hiring": "user-plus", "recruit": "user-plus", "recruiting": "user-plus", "onboarding": "user-plus",
+    "admin": "users-cog", "management": "users-cog", "manager": "users-cog", "governance": "users-cog",
+    "gear": "cogs", "gears": "cogs", "cog": "cogs", "settings": "cogs", "automation": "cogs", "automate": "cogs",
+    "process": "workflow", "flow": "workflow", "pipeline": "workflow", "integration": "workflow",
+    "money": "dollar", "cost": "dollar", "costs": "dollar", "price": "dollar", "pricing": "dollar", "budget": "dollar",
+    "savings": "dollar", "revenue": "dollar", "finance": "dollar",
+    "time": "clock", "speed": "clock", "fast": "clock", "sla": "clock", "response": "clock",
+    "date": "calendar", "schedule": "calendar", "timeline": "calendar", "plan": "calendar", "roadmap": "route",
+    "journey": "route", "path": "route",
+    "security": "shield", "secure": "shield", "protection": "shield", "cyber": "shield", "cybersecurity": "shield",
+    "soc": "user-shield", "privacy": "lock", "access": "lock",
+    "idea": "lightbulb", "innovation": "lightbulb", "insight": "lightbulb", "strategy": "lightbulb",
+    "growth": "chart", "analytics": "chart", "metrics": "chart", "kpi": "chart", "trend": "chart", "results": "chart",
+    "report": "chart", "reporting": "chart", "dashboard": "chart",
+    "goal": "flag", "goals": "flag", "target": "flag", "milestone": "flag", "objective": "flag",
+    "launch": "rocket", "start": "rocket", "deploy": "rocket", "deployment": "rocket", "go-live": "rocket",
+    "data": "database", "storage": "database", "partner": "handshake", "partnership": "handshake",
+    "agreement": "handshake", "handover": "handshake", "transition": "handshake", "support": "headset",
+    "help": "headset", "service": "headset", "helpdesk": "headset", "done": "check-circle", "complete": "check-circle",
+    "success": "check-circle", "quality": "check-circle", "risk": "warning", "alert": "warning", "issue": "warning",
+    "research": "search", "discovery": "search", "find": "search", "analysis": "microscope", "assess": "microscope",
+    "assessment": "microscope", "document": "file", "doc": "file", "documents": "file", "contract": "file",
+    "tool": "tools", "build": "tools", "engineering": "tools", "view": "eye", "visibility": "eye", "monitor": "eye",
+    "monitoring": "eye", "compliance": "clipboard-check", "audit": "clipboard-check", "checklist": "clipboard-check",
+    "dev": "code", "development": "code", "software": "code", "compare": "balance", "fair": "balance",
+    "tune": "sliders", "options": "sliders", "night": "moon", "24x7": "moon", "click": "pointer", "import": "file-import",
+    "migration": "file-import", "tickets": "ticket", "incident": "ticket",
+}
+
+
+def resolve_icon(i, name):
+    """Bundled icon for `name` (exact, alias or plural), or None with a warning."""
+    if not name:
+        return None
+    key = str(name).strip().lower()
+    names = icon_names()
+    for k in (key, ICON_ALIASES.get(key), key.rstrip("s"), ICON_ALIASES.get(key.rstrip("s"))):
+        if k and k in names:
+            return k
+    warn(i, f"unknown icon '{name}', used a number instead (icons: {', '.join(names)})")
+    return None
+
+
 def note_band(c, text, y=None):
     """Full-width band for a source, assumption or key message at the bottom of a slide."""
     y = y if y is not None else BOTTOM - 0.62
@@ -127,9 +174,7 @@ def s_cards(deck, s, i):
         c.card(x, y, w, h, border=col if card.get("highlight") else None)
         if card.get("tag"):
             c.chip(x + w - 1.45, y + 0.22, 1.25, card["tag"], col)
-        icon = card.get("icon")
-        if icon and icon not in icon_names():
-            warn(i, f"unknown icon '{icon}', used a number instead"); icon = None
+        icon = resolve_icon(i, card.get("icon"))
         if card.get("value"):
             c.text(x + 0.25, y + 0.15, w - 0.5, 0.75, card["value"], size=fit_size(card["value"], w - 0.5, 0.7, 40, 22),
                    color=c.t.accent(col), light=True)
@@ -182,9 +227,7 @@ def s_process(deck, s, i):
     bottom = note_band(c, s["note"]) if s.get("note") else BOTTOM
     rows = []
     for k, st in enumerate(steps):
-        icon = st.get("icon") if st.get("icon") in icon_names() else None
-        if st.get("icon") and not icon:
-            warn(i, f"unknown icon '{st['icon']}'")
+        icon = resolve_icon(i, st.get("icon"))
         rows.append((icon, st.get("owner", ""), color_of(st, k), st.get("title", ""), st.get("text", "")))
     h = min(2.7 if s.get("bullets") else 3.2, bottom - c.top - 0.2)
     y0 = c.top + 0.15 if s.get("bullets") else c.top + max(0.15, (bottom - c.top - h) / 2 - 0.25)

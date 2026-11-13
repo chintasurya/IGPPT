@@ -351,7 +351,7 @@ class Validator:
         if slide.has_notes_slide:
             notes = slide.notes_slide.notes_text_frame.text if slide.notes_slide.notes_text_frame else ""
             for level, msg in ig_text.check_text(notes, spelling=False):
-                if "dash" in msg:
+                if "dash" in msg and "speaker notes" not in msg:
                     self.add("WARN", i, f"speaker notes {msg}", notes, fix="rewrite the notes")
 
     def shape_checks(self, i, slide, shape, layout):
@@ -521,6 +521,8 @@ class Validator:
             fix = None
             if "dash" in msg:
                 fix = "make_deck.py fixes dashes automatically; or rewrite"
+            elif "speaker notes" in msg:
+                fix = "move this text to the slide's \"notes\" field (speaker notes)"
             elif msg.startswith("spelling"):
                 fix = "correct the spelling"
             target = text
@@ -635,8 +637,8 @@ class Validator:
         for i, slide in enumerate(self.prs.slides, 1):
             self.slide_checks(i, slide)
         if self.spelling and not ig_text.spelling_available():
-            self.r.add("FAIL", 0, f"the bundled spell checker (scripts/vendor) could not load: {ig_text.spell_error}",
-                       fix="reinstall the skill so scripts/vendor/spellchecker is complete")
+            self.r.add("FAIL", 0, f"the bundled spell checker could not load: {ig_text.spell_error}",
+                       fix="reinstall the skill so scripts/spellchecker and assets/spell-en.json are complete")
         seen, items = set(), []
         for it in self.r.items:
             k = (it["level"], it["slide"], it["message"])

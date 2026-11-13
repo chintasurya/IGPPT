@@ -8,7 +8,8 @@ It:
   3. writes the standing rule that makes assistants use IGPPT for every presentation request
      (.github/copilot-instructions.md for GitHub Copilot, AGENTS.md for Codex, Cursor and Gemini CLI,
       CLAUDE.md for Claude Code), with the exact script paths for this project,
-  4. adds a /igppt command for Copilot Chat (.github/prompts/igppt.prompt.md),
+  4. adds starter prompts as slash commands (/igppt, /igppt-quarterly, /igppt-from-notes, /igppt-proposal,
+     /igppt-update-deck) for Copilot Chat (.github/prompts) and Claude Code (.claude/commands),
   5. turns on agent skills in VS Code for this project (.vscode/settings.json),
   6. adds igppt-words.txt for client and product names the spell check should accept,
   7. builds and validates a test deck to prove everything works.
@@ -24,6 +25,32 @@ from pathlib import Path
 SKILL = Path(__file__).resolve().parent.parent
 SCRIPTS = SKILL / "scripts"
 START, END = "<!-- IGPPT:START -->", "<!-- IGPPT:END -->"
+
+# Starter prompts: (command name, description, instructions, question asked when the command runs)
+PROMPTS = [
+    ("igppt", "Create any Insight Global branded deck",
+     "Create the presentation described below using the IGPPT skill in `{skill}`.",
+     "What should the deck cover? (topic, audience, number of slides, key facts)"),
+    ("igppt-quarterly", "Quarterly business update or QBR deck (Q1 to Q4) in IG branding",
+     "Create a quarterly update deck with the IGPPT skill in `{skill}`, using the status update / QBR recipe in "
+     "`{skill}/references/deck-recipes.md`: title, agenda, results at a glance (stats), what was delivered, trends (chart), "
+     "risks and decisions, next quarter's plan (timeline), closing. Use only the numbers given; mark anything missing as "
+     "[placeholder] and list it in your reply.",
+     "Which quarter, for which team and audience? Paste the results, numbers, risks and next-quarter plans."),
+    ("igppt-from-notes", "Turn pasted notes, an email or a chat thread into an IG deck",
+     "Turn the notes, email or chat thread below into a deck with the IGPPT skill in `{skill}`. Work out the purpose, "
+     "audience and storyline yourself; pick the closest recipe in `{skill}/references/deck-recipes.md`; list your assumptions.",
+     "Paste the notes, email or chat thread, and say who the deck is for."),
+    ("igppt-proposal", "Proposal or solution design deck in IG branding",
+     "Create a proposal / solution design deck with the IGPPT skill in `{skill}`, using the proposal recipe in "
+     "`{skill}/references/deck-recipes.md`. Do not invent prices, dates or client facts; use [placeholders] instead.",
+     "Who is the client, what problem are we solving, and what are we proposing? Add scope, timeline and team if known."),
+    ("igppt-update-deck", "Revise an existing IGPPT deck from feedback",
+     "Revise a deck with the IGPPT skill in `{skill}`. Find the deck's JSON spec (or read the .pptx with "
+     "`python {skill}/scripts/deck_text.py file.pptx` and write a spec from it), apply the changes below to the spec, "
+     "and rebuild it. Keep everything else as it was.",
+     "Which deck, and what should change?"),
+]
 
 
 def say(ok, msg):
@@ -93,20 +120,23 @@ Never write your own python-pptx, pptxgenjs, HTML or Office code for slides, nev
         upsert(f, rule)
         say(True, f"rule written to {rel(f, root)}")
 
-    # 4. /igppt command for Copilot Chat
-    prompt = root / ".github" / "prompts" / "igppt.prompt.md"
-    prompt.parent.mkdir(parents=True, exist_ok=True)
-    prompt.write_text(f"""---
-description: Create an Insight Global branded PowerPoint deck with the IGPPT skill
-agent: agent
----
-Create the presentation described below using the IGPPT skill in `{skill_rel}`.
-
-Follow `{skill_rel}/SKILL.md` exactly: write a JSON spec, then run `python {mk} deck.json <name>.pptx`. It builds and validates the deck and saves it only when everything passes. On FAIL, change the spec as each problem says and run it again until it prints SAVED. Never write your own slide code, start from a blank PowerPoint, or edit the .pptx by hand.
-
-Request: ${{input:request:What should the deck cover?}}
-""", encoding="utf-8")
-    say(True, "Copilot Chat command /igppt added (.github/prompts/igppt.prompt.md)")
+    # 4. Starter prompts: slash commands in Copilot Chat (.github/prompts) and Claude Code (.claude/commands)
+    rules = (f"Follow `{skill_rel}/SKILL.md` exactly: write a JSON spec, then run `python {mk} deck.json <name>.pptx`. "
+             "It builds the deck on the IG template, validates it and saves it only when everything passes. On FAIL, "
+             "change the spec as each problem says and run the same command again until it prints SAVED. Never write your "
+             "own slide code, start from a blank PowerPoint, or edit the .pptx by hand. Reply with the .pptx, the slide "
+             "list and any assumptions.")
+    for name, desc, body, ask in PROMPTS:
+        text = body.format(skill=skill_rel)
+        gh = root / ".github" / "prompts" / f"{name}.prompt.md"
+        gh.parent.mkdir(parents=True, exist_ok=True)
+        gh.write_text(f"---\ndescription: {desc}\nagent: agent\n---\n{text}\n\n{rules}\n\n${{input:request:{ask}}}\n",
+                      encoding="utf-8")
+        cc = root / ".claude" / "commands" / f"{name}.md"
+        cc.parent.mkdir(parents=True, exist_ok=True)
+        cc.write_text(f"---\ndescription: {desc}\n---\n{text}\n\n{rules}\n\nRequest: $ARGUMENTS\n", encoding="utf-8")
+    say(True, "starter prompts added: " + ", ".join("/" + n for n, *_ in PROMPTS)
+        + " (.github/prompts for Copilot, .claude/commands for Claude Code)")
 
     # 5. VS Code: make sure agent skills are on for this project
     vs = root / ".vscode" / "settings.json"

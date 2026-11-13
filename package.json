@@ -1,9 +1,31 @@
 {
   "name": "igppt",
-  "version": "1.0.0",
-  "description": "Insight Global branded PowerPoint decks: installs the IGPPT skill and the IGPPT agent for GitHub Copilot, Copilot CLI, Claude Code, Codex, Cursor and Gemini CLI.",
-  "bin": { "igppt": "bin/igppt.js" },
-  "files": ["bin/", "igppt/", "copilot/"],
-  "engines": { "node": ">=16.7" },
-  "repository": { "type": "git", "url": "git+https://github.com/chintasurya/igppt.git" }
+  "version": "1.2.0",
+  "description": "Insight Global branded PowerPoint decks for GitHub Copilot, Claude Code, Codex, Cursor and Gemini CLI: installs the IGPPT skill, the ig-proposal-review skill, agent, instructions and starter prompts; every deck is built on the IG template and validated before it is saved.",
+  "bin": {
+    "igppt": "bin/igppt.js"
+  },
+  "files": [
+    "bin/",
+    "igppt/",
+    "ig-proposal-review/",
+    "copilot/agents/"
+  ],
+  "engines": {
+    "node": ">=16.7"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chintasurya/igppt.git"
+  },
+  "keywords": [
+    "powerpoint",
+    "pptx",
+    "copilot",
+    "agent-skills",
+    "claude-code",
+    "insight-global"
+  ],
+  "license": "UNLICENSED",
+  "homepage": "https://github.com/chintasurya/igppt#readme"
 }

@@ -14,14 +14,17 @@ It follows the open Agent Skills format (a folder with `SKILL.md`), so the same 
 | `igppt/references/deck-recipes.md` | Storylines for common deck requests |
 | `igppt/references/spec-format.md` | Every slide type and field |
 | `igppt/references/ig-brand.md` | IG layouts, colours, fonts, icons |
-| `igppt/scripts/make_deck.py` | The one command: checks and fixes the spec, builds, validates, saves only on PASS |
+| `igppt/scripts/igppt.py` | What agents run: `start` (set-up check, lessons, exact commands), `build` (deck + check report), `verify` |
+| `igppt/scripts/make_deck.py` | Checks and fixes the spec, builds, validates, saves only on PASS, stamps the deck and writes the check report |
 | `igppt/scripts/validate.py` | Validates a deck: template, fonts, colours, fit, overlap, spacing, dashes, spelling |
 | `igppt/scripts/build_deck.py` | Builds a deck from a JSON spec (used by `make_deck.py`) |
 | `igppt/scripts/ig_kit.py` | Library behind it, for custom slides |
 | `igppt/scripts/ig_metrics.py`, `ig_text.py` | Text measuring and text rules shared by the builder and the validator |
 | `igppt/scripts/init.py` | One-time project set-up and self-test |
 | `igppt/scripts/check_deck.py` | Older name for `validate.py` |
-| `igppt/scripts/vendor/spellchecker` | Bundled spell checker (pyspellchecker, MIT), so no install is needed |
+| `igppt/scripts/learn.py`, `igppt/assets/lessons.json` | Lessons learned from feedback, checked on every build |
+| `tools/merge_lessons.py` | Makes lessons from users' `igppt-lessons.json` files permanent in the skill |
+| `igppt/scripts/spellchecker`, `igppt/assets/spell-en.json` | Bundled spell checker and English dictionary (pyspellchecker, MIT), so no install is needed |
 | `igppt/assets/wordlist.txt` | Business and technology words the spell check accepts |
 | `igppt/scripts/render_preview.py` | Slide images for checking (needs LibreOffice) |
 | `igppt/scripts/deck_text.py` | Reads an existing deck's text |
@@ -30,19 +33,41 @@ It follows the open Agent Skills format (a folder with `SKILL.md`), so the same 
 | `copilot/agents/igppt.agent.md` | "IGPPT" custom agent for Copilot |
 | `chatgpt/GPT-instructions.md` | Set-up and instructions for a ChatGPT custom GPT |
 | `chatgpt/igppt-skill.zip` | The skill packed for upload to a custom GPT |
+| `copilot/igppt-m365-skill.zip` | The skill packed for Microsoft 365 Copilot Agent Builder (SKILL.md at the zip root) |
+| `copilot/M365-AGENT-SETUP.md` | Step-by-step set-up of the IGPPT agent in Microsoft 365 Copilot |
 | `tools/test_igppt.py` | Regression tests: clean decks pass, broken decks fail |
+| `ig-proposal-review/` | Second skill: reviews a proposal against the RFP (requirements, gaps, competition, differentiators, team size, pricing) with verified quotes and sourced facts, and builds the review deck and a corrected deck with IGPPT |
+| `chatgpt/ig-proposal-review-skill.zip`, `copilot/ig-proposal-review-m365-skill.zip` | The review skill packed for ChatGPT / claude.ai and for Microsoft 365 Copilot |
+| `tools/test_review.py` | Tests for the review skill: invented quotes, unsourced facts and wrong maths fail |
 
 ## Install: one command
 
-Paste this into Copilot (or any assistant that can run commands, or a terminal) inside the project:
+Open the project folder in VS Code, then paste this into the terminal, or into Copilot Chat in Agent mode and let it run the command:
+
+```bash
+npx igppt@latest
+```
+
+Until the package is published to npm (see Maintainers), use the same installer straight from GitHub:
 
 ```bash
 npx -y https://codeload.github.com/chintasurya/igppt/tar.gz/refs/heads/main
 ```
 
-It downloads the latest IGPPT over HTTPS every time it runs (no git and no login needed), writes the full skill with the IG template to `.claude/skills/igppt`, `.github/skills/igppt` and `.agents/skills/igppt`, creates the **IGPPT agent**, writes the "always use IGPPT for presentations" rule, installs `python-pptx`, and builds a test deck that must pass. Run the same command again to update. Add `--global` at the end to install for your user across all projects.
+Either command downloads the newest IGPPT from GitHub every time it runs (no git and no login needed) and sets up everything in the project:
 
-Needs Node.js and Python 3.9+.
+| What | Where |
+|---|---|
+| The skill, with the IG template, builder and validator | `.github/skills/igppt`, `.agents/skills/igppt`, `.claude/skills/igppt` |
+| The **IGPPT agent** | `.github/agents/igppt.agent.md` (Copilot), `.claude/agents/igppt.md` (Claude Code) |
+| The standing rule "always use IGPPT for presentations" | `.github/copilot-instructions.md`, `AGENTS.md`, `CLAUDE.md` |
+| Starter prompts as slash commands: `/igppt`, `/igppt-quarterly`, `/igppt-from-notes`, `/igppt-proposal`, `/igppt-update-deck` | `.github/prompts` (Copilot), `.claude/commands` (Claude Code) |
+| Agent skills turned on in VS Code | `.vscode/settings.json` |
+| Word list for client and product names | `igppt-words.txt` |
+
+It also installs `python-pptx` and builds and validates a test deck, which must pass. It ends with "Ready." Run the same command again to update. Add `--global` to install the skill and agent for your user across all projects. Add `--offline` to use the copy inside the package instead of the newest from GitHub.
+
+Needs Node.js and Python 3.9 or newer on the computer. The decks are built and validated on that computer, by the person's own Copilot.
 
 ## Install with the skills CLI (alternative)
 
@@ -157,9 +182,34 @@ Limits to know about:
 - Spelling is English (US and UK spellings). It cannot judge grammar, wrong-but-real words ("form" for "from"), or whether a name is spelled right.
 - The validator checks geometry and text; it does not look at the rendered picture. Use `--preview` for a final look when LibreOffice is installed.
 
-## Microsoft 365 Copilot (Teams, Outlook)
+## Learning from feedback
 
-This skill runs in assistants that can run Python in a workspace (GitHub Copilot agent mode, Copilot CLI, Claude Code). Microsoft 365 Copilot agents built in Copilot Studio cannot run it directly. To trigger decks from Teams or email, host `make_deck.py` behind an internal service (for example an Azure Function that takes a JSON spec and returns the `.pptx`) and call it from a Copilot Studio action, with this skill's `SKILL.md` and references as the agent's instructions.
+The model behind Copilot cannot be retrained, so IGPPT turns every correction into a **lesson**: a rule checked on every build. When a user says "this is wrong", the agent records it with `scripts/learn.py add` (for example "never 'And' in title case in a title", "at most 5 bullets", "always end with a closing slide"), proves the rule catches the mistake, fixes the deck and rebuilds. `make_deck.py` will not save a deck that breaks a lesson.
+
+Microsoft 365 Copilot wipes the agent's working folder after every chat, so lessons are carried forward in four ways, all loaded by `learn.py start` at the beginning of each chat:
+
+0. **Lessons skill** (recommended): `learn.py export` also writes `igppt-lessons/SKILL.md`, a one-file skill with every lesson. The agent owner uploads it in Agent Builder (Skills, Upload skill, replacing the previous one); `start` reads it from the agent's skills folder, so nothing is copied by hand.
+1. **Lessons block in the agent's instructions**: after learning, `learn.py export` prints a block (`<<<IGPPT-LESSONS ... IGPPT-LESSONS>>>`) with a count and checksum. The agent owner pastes it at the end of the agent's instructions; every new chat for every user loads it, and a block damaged in copying is reported instead of half-loaded.
+2. **GitHub**: when the sandbox has internet, `start` downloads `igppt/assets/lessons.json` from this repository, so merged lessons apply without re-uploading the skill.
+3. **The skill itself**: `python tools/merge_lessons.py <block.txt or igppt-lessons.json>`, then run the tests, `python tools/build_zips.py`, commit, and re-upload `igppt-m365-skill.zip`.
+
+In VS Code or Claude Code, lessons are saved in the project's `igppt-lessons.json` and apply at once. Feedback that no rule can express is stored as `guidance`, which the agent reads before every deck but the code cannot enforce. Fully automatic sharing (the agent writing lessons to SharePoint for everyone) needs Copilot Studio with a Power Automate flow.
+
+## Proposal review skill
+
+`ig-proposal-review` reviews a bid: it extracts the customer's requirements from the RFP with exact quotes, researches the customer and the competition (with links, when web search is available), marks each requirement met, partial or missing against the proposal, lists the gaps with fixes, keeps only provable differentiators, and checks team size and pricing with calculations it shows. `check_review.py` rejects quotes that are not in the documents, outside facts without a source, and recommendations that contradict the maths. The review deck and the corrected proposal deck are built and validated by IGPPT.
+
+```bash
+python ig-proposal-review/scripts/extract_docs.py rfp.pdf proposal.pptx pricing.xlsx --out corpus
+python ig-proposal-review/scripts/check_review.py review.json --corpus corpus
+python ig-proposal-review/scripts/review_to_deck.py review.checked.json "Customer Proposal Review.pptx"
+```
+
+## Microsoft 365 Copilot (Agent Builder)
+
+Microsoft 365 Copilot cannot run install commands, but its agents can use uploaded **skills** that run Python. Upload `copilot/igppt-m365-skill.zip` (SKILL.md at the root of the zip, as Agent Builder requires) as the agent's skill, paste the agent instructions, and share the agent. Step-by-step guide: [`copilot/M365-AGENT-SETUP.md`](copilot/M365-AGENT-SETUP.md).
+
+If Agent Builder creates its own skill (for example `igppt-deck-builder` with a `main.py`), remove it: it does not use the IG template.
 
 ## Notes
 
@@ -171,8 +221,22 @@ This skill runs in assistants that can run Python in a workspace (GitHub Copilot
 
 After changing anything in `igppt/` or `copilot/`:
 
-1. `python tools/test_igppt.py` (all tests must pass),
+1. `python tools/test_igppt.py` and `python tools/test_review.py` (all tests must pass),
 2. `python tools/make_manifest.py`,
-3. rebuild `chatgpt/igppt-skill.zip` (the `igppt/` folder, without `__pycache__`),
+3. `python tools/build_zips.py` (checks Microsoft's skill upload rules and rebuilds all four zips),
 
 then commit; the installer downloads the files listed in `manifest.json`.
+
+### Publishing to npm (once, so `npx igppt@latest` works)
+
+The name `igppt` was free on npm when this was written. Before publishing, make sure Insight Global is happy for the template and brand assets to be downloadable from npm; they are already public in this GitHub repository.
+
+```bash
+npm login
+```
+
+```bash
+npm publish
+```
+
+Run both from the repository root, on `main`. After that, `npx igppt@latest` works for everyone. The installer always downloads the newest files from GitHub `main`, so you only need to publish again when `bin/igppt.js` itself changes (raise `version` in `package.json` first).

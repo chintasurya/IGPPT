@@ -5,7 +5,8 @@ Shared by validate.py (checks the finished deck) and make_deck.py (checks and au
     problems = check_text("Ticket volume is faling — fast")   # [(level, message), ...]
     fixed, changes = fix_text("Results — strong")              # mechanical fixes only
 
-Spelling uses the bundled pyspellchecker (scripts/vendor, MIT licence) plus two word lists:
+Spelling uses the bundled pyspellchecker (scripts/spellchecker, MIT licence; dictionary in assets/spell-en.json)
+plus two word lists:
   assets/wordlist.txt   business and technology terms that ship with the skill
   igppt-words.txt       optional, next to the spec or in the project folder: client names, product names
 British spellings (colour, organisation, prioritise, centre) are accepted.
@@ -25,6 +26,9 @@ _SPACED = re.compile(r"\s+[–—―]\s+|\s*--\s*")                      # word 
 _TIGHT = re.compile(r"(?<=\w)[–—―](?=\w)")                         # word—word
 _ANY_DASH = re.compile(r"[–—―]|--")
 PLACEHOLDER_FAIL = re.compile(r"lorem ipsum|click to (add|edit)|\bTODO\b|\bFIXME\b|\binsert (text|title|here)\b", re.I)
+INTERNAL = re.compile(r"(?:^|[.;!?]\s+|\n)\s*(audience|target audience|presenter|presenter notes?|speaker notes?|"
+                      r"talking points?|notes? to self|note for (?:the )?(?:presenter|team)|internal(?: only| note)?|"
+                      r"for internal use|do not show|instructions?|prompt)\s*:", re.I)
 PLACEHOLDER_WARN = re.compile(r"\[[^\]]{0,40}\]|\bTBD\b|\bXX+\b|\?\?")
 
 
@@ -64,18 +68,18 @@ _UK = [("isations", "izations"), ("isation", "ization"), ("ising", "izing"), ("i
 
 
 def _load_spellchecker():
-    """pyspellchecker 0.9.1 (MIT) with its English dictionary is bundled in scripts/vendor, so the
-    spell check works offline and needs no pip install."""
+    """pyspellchecker 0.9.1 (MIT) is bundled in scripts/spellchecker and its English dictionary in
+    assets/spell-en.json, so the spell check works offline and needs no pip install."""
     global _spell
     if _spell is not None:
         return _spell
-    vendor = str(Path(__file__).resolve().parent / "vendor")
-    if vendor not in sys.path:
-        sys.path.insert(0, vendor)
+    here = str(Path(__file__).resolve().parent)
+    if here not in sys.path:
+        sys.path.insert(0, here)
     global spell_error
     try:
         from spellchecker import SpellChecker
-        _spell = SpellChecker(language="en", distance=2)
+        _spell = SpellChecker(language=None, local_dictionary=str(ASSETS / "spell-en.json"), distance=2)
     except Exception as e:  # report why, instead of silently skipping the spell check
         spell_error = f"{type(e).__name__}: {e}"
         _spell = False
@@ -155,6 +159,10 @@ def check_text(text, spelling=True):
     m = re.search(r"\b(\w+)\s+\1\b", text, re.I)
     if m and not m.group(1).isdigit() and m.group(1).lower() not in ("had", "that", "bye", "very", "so", "no"):
         probs.append((FAIL, f"repeated word '{m.group(0)}'"))
+    m = INTERNAL.search(text)
+    if m:
+        probs.append((FAIL, f"internal or presenter note shown on the slide ('{m.group(1)}:'); move it to the speaker "
+                            f"notes (\"notes\"), not the on-slide \"note\""))
     m = PLACEHOLDER_FAIL.search(text)
     if m:
         probs.append((FAIL, f"leftover placeholder text '{m.group(0)}'"))
