@@ -39,7 +39,8 @@ A **quote** is `{"file": "<file name as extracted>", "quote": "<words copied exa
      "detail": "Coverage math needs 9 to 11 FTE; the deck offers 6",   // 140 max
      "severity": "high",                                 // high | medium | low
      "requirement_ids": ["R1"],
-     "fix": "Add a 3-shift roster and 4 more analysts, or price an on-call model"}  // 140 max
+     "fix": "Add a 3-shift roster and 4 more analysts, or price an on-call model",  // 140 max
+     "say": "The RFP requires 24x7 monitoring. Two analysts on shift around the clock need about ten people once leave is counted, so six cannot hold that cover."}  // 80 to 450: the talk track the presenter reads aloud
   ],
 
   "research": {
@@ -110,7 +111,8 @@ A **quote** is `{"file": "<file name as extracted>", "quote": "<words copied exa
   },
 
   "recommendations": [
-    {"action": "Add 24x7 roster and 4 analysts", "why": "Coverage requirement R1 is not met with 6 FTE", "priority": "high"}  // action 90 max, why 140 max
+    {"action": "Add 24x7 roster and 4 analysts", "why": "Coverage requirement R1 is not met with 6 FTE", "priority": "high",
+     "say": "We recommend a three-shift roster with ten analysts because 24x7 cover is mandatory and the coverage maths shows six is not enough."}  // action 90 max, why 140 max, say 80 to 450
   ],
   "assumptions": ["Each 140 max"],
   "open_questions": ["Each 140 max: what to ask the customer or our team"]

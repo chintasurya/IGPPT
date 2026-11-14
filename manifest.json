@@ -90,6 +90,7 @@
   "igppt/assets/wordlist.txt",
   "igppt/examples/sample-deck.json",
   "igppt/examples/shieldforge-3-slide.json",
+  "igppt/examples/solution-views.json",
   "igppt/references/deck-recipes.md",
   "igppt/references/ig-brand.md",
   "igppt/references/spec-format.md",

@@ -28,12 +28,16 @@ import learn  # noqa: E402
 import validate as V  # noqa: E402
 
 TEXT_SKIP = {"type", "color", "icon", "theme", "background", "image", "style", "number_format"}
-CONTENT = {"bullets", "cards", "stats", "process", "timeline", "table", "chart", "comparison", "image", "team"}
+CONTENT = {"bullets", "cards", "stats", "process", "timeline", "table", "chart", "comparison", "image", "team",
+           "architecture", "flow", "roles"}
+VIEW_TYPES = {"architecture", "flow", "process"}      # slides that show how the solution works; never show one twice
+TALK_MIN = 120                                         # characters of talk track a content slide needs
 REQUIRED = {"title": ["title"], "section": ["title"], "statement": ["text"], "quote": ["text"], "agenda": ["items"],
             "bullets": ["title", "bullets"], "cards": ["title", "cards"], "stats": ["title", "stats"],
             "process": ["title", "steps"], "timeline": ["title", "milestones"], "table": ["title", "rows"],
             "chart": ["title", "chart"], "comparison": ["title", "left", "right"], "image": ["title", "image"],
-            "team": ["title", "members"], "closing": []}
+            "team": ["title", "members"], "closing": [], "architecture": ["title", "columns"],
+            "flow": ["title", "steps"], "roles": ["title", "roles"]}
 
 
 def fix_spec(node, path="", changes=None):
@@ -68,7 +72,65 @@ def check_spec(spec):
         for field in REQUIRED.get(kind, []):
             if not s.get(field):
                 out.append(("FAIL", i, f"{kind} slide needs \"{field}\" (slides[{i - 1}].{field})"))
+        if spec.get("talk_track") and kind in CONTENT and len(str(s.get("notes", "")).strip()) < TALK_MIN:
+            out.append(("FAIL", i, f"talk track missing: slides[{i - 1}].notes needs the statement the presenter says "
+                                   "(why we propose this, the evidence behind it, what changes for the client), "
+                                   f"at least {TALK_MIN} characters"))
+    out += view_repeats(slides)
     return out
+
+
+def _norm(t):
+    return " ".join("".join(ch if ch.isalnum() else " " for ch in str(t).lower()).split())
+
+
+def view_items(s):
+    """The named parts of a solution view: architecture columns and items, flow or process steps."""
+    names = []
+    if s.get("type") == "architecture":
+        for col in s.get("columns", []):
+            names.append(col.get("label", ""))
+            for it in col.get("items", []):
+                names.append(it.get("title", ""))
+                names += [sub.get("title", "") for sub in it.get("items", []) or []]
+    else:
+        names = [st.get("title", "") for st in s.get("steps", [])]
+    return {n for n in map(_norm, names) if n}
+
+
+def view_repeats(slides):
+    """FAIL when a deck shows the same solution view twice: a second architecture slide, or a flow or process
+    slide whose parts mostly repeat another view's parts. Each view must show a different angle."""
+    out, views = [], []
+    for i, s in enumerate(slides, 1):
+        if isinstance(s, dict) and s.get("type") in VIEW_TYPES:
+            views.append((i, s))
+    arch = [i for i, s in views if s.get("type") == "architecture"]
+    for i in arch[1:]:
+        out.append(("FAIL", i, f"second architecture view (slide {arch[0]} already has one): keep one architecture "
+                               "slide per deck and merge this content into it, or show a different angle "
+                               "(flow, roles, table)"))
+    for a_k, (i, a) in enumerate(views):
+        for j, b in views[a_k + 1:]:
+            sa, sb = view_items(a), view_items(b)
+            shared = sa & sb
+            if len(shared) >= 3 and len(shared) / max(1, min(len(sa), len(sb))) >= 0.5:
+                out.append(("FAIL", j, f"repeats the view on slide {i} ({len(shared)} of the same parts: "
+                                       f"{', '.join(sorted(shared)[:4])}): merge the two slides or show a different angle"))
+    return out
+
+
+def write_talk_track(spec, path, deck_name):
+    """One statement per slide, in slide order, for the presenter to read and say with confidence."""
+    lines = [f"# Talk track: {deck_name}", "",
+             "Read each statement aloud with its slide. Each says what we propose, why, and the evidence behind it.", ""]
+    for k, s in enumerate(spec.get("slides", []), 1):
+        notes = str(s.get("notes", "")).strip()
+        if not notes:
+            continue
+        title = s.get("title") or s.get("text") or s.get("type", "").title()
+        lines += [f"## {k}. {title}", "", notes, ""]
+    path.write_text("\n".join(lines), encoding="utf-8")
 
 
 def main():
@@ -165,6 +227,10 @@ def main():
         if lessons:
             fh.write(f"\nLessons in force: {len(lessons)}\n" + "".join(
                 f"  {l.get('id')}: {l.get('mistake') or l.get('text')}\n" for l in lessons))
+    if spec.get("talk_track"):
+        talk = out.with_name(out.stem + " - talk track.md")
+        write_talk_track(spec, talk, out.name)
+        print(f"TALK TRACK: {talk} (deliver it with the deck)")
     print(f"SAVED: {out} ({n} slides)")
     print(f"CHECK REPORT: {check_file} (deliver it with the deck)")
     if preview:

@@ -13,22 +13,26 @@ Proven storylines for common requests. Adapt the slide count to the request; eac
 8. closing
 
 ## Proposal / solution design (10 to 16 slides)
-Lessons from IG proposals: lead with the client's problem, back every claim with their data, show the team can actually carry the load, and keep commercials consistent.
+Lessons from IG proposals: lead with the client's problem, back every claim with their data, show the team can actually carry the load, and keep commercials consistent. Set `"talk_track": true` and `"background": "black"` (or the gradient default) for client executives.
 1. title
 2. agenda
-3. bullets or comparison: our understanding (today vs target state, the pains behind the request)
+3. comparison: scope (what we own vs what stays with the client), or bullets: our understanding
 4. stats: what their data shows (volumes, mix, peaks), with the source in `note`
-5. cards: the solution in 3 to 5 parts
-6. process: transition plan (onboard, knowledge transfer, co-support, take ownership, optimise)
-7. process: how work moves between teams (handoff steps, who owns each, when ownership transfers)
-8. cards: scope rule (what the team handles vs what goes back), with examples
-9. team: roles; or a custom `schedule` slide via ig_kit for shift coverage, backups and on-call
+5. architecture: the one solution view (inputs, our build, their platform, their review and release)
+6. flow: how one request moves end to end, who owns each step, where our accountability starts
+7. roles: the team and its ramp
+8. table: who owns what across every party
+9. timeline: mobilization and transition
 10. table: service levels and KPIs (mark targets "proposed" until agreed)
 11. cards or stats: value to the client (each tied to a number from their data)
 12. bullets: risks and mitigations
 13. table: commercials (check the arithmetic: monthly x 12 = annual)
 14. timeline: next steps to signature and go-live
 15. closing
+
+Never show the same view twice: one architecture, one flow, one team slide. If two slides would show the same parts, merge them.
+
+Write each slide's `notes` as the talk track the presenter reads aloud: what we propose, why it matters to this client, and the evidence (a quote from their documents, a number, a source). When the deck corrects or extends someone else's proposal, say for every change what was missing and why the change is stronger.
 
 Before sizing a team, compare demand with capacity: tickets x handling time + enhancement hours + overheads, against about 135 productive hours per person per month. Say plainly if the team is short and show options with cost.
 

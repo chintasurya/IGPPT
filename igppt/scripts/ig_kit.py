@@ -254,13 +254,7 @@ class Canvas:
             else:
                 flat.append((str(it), 0))
         if size is None:
-            size = fit[0]
-            while size > fit[1]:
-                m = ig_metrics.measure([{"runs": [(f, size - 2 * lvl, "regular", 0.0)], "indent": 0.28 + 0.3 * lvl, "after": gap}
-                                        for f, lvl in flat], w)
-                if m["height"] <= h and not m["split_words"]:
-                    break
-                size -= 0.5
+            size = bullets_fit(items, w, h, fit, gap)
         tb = self.shapes.add_textbox(Inches(x), Inches(y), Inches(w), Inches(h))
         tf = tb.text_frame
         self._frame(tf, "top")
@@ -308,6 +302,24 @@ class Canvas:
         if dash:
             ln.line.dash_style = MSO_LINE.DASH
         return ln
+
+    def arrow(self, x1, y1, x2, y2, color=None, width=1.25, dash=False):
+        """Straight line with an arrowhead at (x2, y2). Use it to join columns, steps and loops."""
+        ln = self.line(x1, y1, x2, y2, color=color or self.t.ink, width=width, dash=dash)
+        lnel = ln.line._get_or_add_ln()
+        tail = etree.SubElement(lnel, f"{{{_A}}}tailEnd")
+        tail.set("type", "triangle"); tail.set("w", "med"); tail.set("len", "med")
+        return ln
+
+    def outline(self, x, y, w, h, color, dash=True, width=1, radius=None):
+        """Unfilled box with a (dashed) coloured border, e.g. an optional or future item."""
+        kind = MSO_SHAPE.ROUNDED_RECTANGLE if radius else MSO_SHAPE.RECTANGLE
+        sh = self._shape(kind, x, y, w, h, None, color, width)
+        if radius:
+            sh.adjustments[0] = min(0.5, radius / min(w, h))
+        if dash:
+            sh.line.dash_style = MSO_LINE.DASH
+        return sh
 
     def image(self, path, x, y, w=None, h=None):
         return self.shapes.add_picture(str(path), Inches(x), Inches(y), Inches(w) if w else None, Inches(h) if h else None)
@@ -465,12 +477,14 @@ class Canvas:
             self.card(x, y, w, h, border=color if i == highlight else None)
             if icon:
                 self.icon_circle(x + 0.16, y + 0.16, 0.46, color, icon)
-            else:
-                self.oval(x + 0.16, y + 0.16, 0.46, fill=color, text=str(i + 1), text_size=15)
-            head = [{"text": f"STEP {i + 1}", "color": self.t.dim, "br": bool(owner)}]
+            else:   # executive default: a light step number in the step's colour, no icon
+                self.text(x + 0.16, y + 0.12, 0.52, 0.5, f"{i + 1:02d}", size=22, light=True, color=self.t.accent(color),
+                          valign="middle")
+            head = [{"text": f"STEP {i + 1}", "color": self.t.dim, "br": bool(owner)}] if icon else []
             if owner:
                 head.append({"text": owner.upper(), "color": self.t.accent(color)})
-            self.text(x + 0.72, y + 0.16, w - 0.85, 0.46, head, size=8.5, bold=True, spacing=2, valign="middle")
+            if head:   # with a step number already shown, only the owner is needed
+                self.text(x + 0.72, y + 0.16, w - 0.85, 0.46, head, size=8.5, bold=True, spacing=2, valign="middle")
             self.text(x + 0.16, y + 0.74, w - 0.32, 0.36, title, size=fit_size(title, w - 0.32, 0.36, 15, 11, bold=True), bold=True)
             self.text(x + 0.16, y + 1.14, w - 0.32, h - 1.24, desc, fit=(13, 9), color=self.t.muted)
             if i < len(steps) - 1:
@@ -545,6 +559,30 @@ class Canvas:
         if o.get("spacing"):
             r._r.get_or_add_rPr().set("spc", str(int(o["spacing"] * 100)))
         return r
+
+
+def _flat(items):
+    flat = []
+    for it in items:
+        if isinstance(it, dict):
+            flat.append((it["text"], 0)); flat += [(s_, 1) for s_ in it.get("sub", [])]
+        else:
+            flat.append((str(it), 0))
+    return flat
+
+
+def bullets_fit(items, w, h, fit=(18, 10), gap=6):
+    """Largest bullet size (pt) at which `items` fit a w x h box (same rule as Canvas.bullets).
+    Use the smallest result across sibling cards so they share one size."""
+    flat = _flat(items)
+    size = fit[0]
+    while size > fit[1]:
+        m = ig_metrics.measure([{"runs": [(f, size - 2 * lvl, "regular", 0.0)], "indent": 0.28 + 0.3 * lvl, "after": gap}
+                                for f, lvl in flat], w)
+        if m["height"] <= h and not m["split_words"]:
+            break
+        size -= 0.5
+    return size
 
 
 def icon_names():

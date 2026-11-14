@@ -20,7 +20,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ig_kit import (ACCENTS, BOTTOM, DARK, LEFT, NAVY, RIGHT, WIDTH,  # noqa: E402
-                    Deck, columns, fit_size, icon_names, text_height)
+                    Deck, bullets_fit, columns, fit_size, icon_names, one_line_size, text_height)
 
 WARNINGS = []      # (slide, message, fatal): fatal means content was lost, so the deck must not be delivered
 
@@ -29,9 +29,15 @@ def warn(i, msg, fatal=False):
     WARNINGS.append((i, msg, fatal))
 
 
+def on_theme(c, colr):
+    """White marks the neutral column or role on dark slides; on light slides it becomes the theme ink."""
+    return c.t.ink if colr.upper() == "FFFFFF" and c.t is not DARK else colr
+
+
 def color_of(item, k):
     c = item.get("color")
-    named = {"cyan": "00D6F1", "yellow": "FFD700", "magenta": "FF0069", "pink": "FF0069", "green": "55E03A", "orange": "F98B34"}
+    named = {"cyan": "00D6F1", "yellow": "FFD700", "magenta": "FF0069", "pink": "FF0069", "green": "55E03A", "orange": "F98B34",
+             "white": "FFFFFF", "navy": "00273B"}
     return named.get(str(c).lower(), c) if c else ACCENTS[k % len(ACCENTS)]
 
 
@@ -175,15 +181,23 @@ def s_cards(deck, s, i):
         if card.get("tag"):
             c.chip(x + w - 1.45, y + 0.22, 1.25, card["tag"], col)
         icon = resolve_icon(i, card.get("icon"))
+        bar = False
         if card.get("value"):
             c.text(x + 0.25, y + 0.15, w - 0.5, 0.75, card["value"], size=fit_size(card["value"], w - 0.5, 0.7, 40, 22),
                    color=c.t.accent(col), light=True)
         elif icon:
             c.icon_circle(x + 0.22, y + 0.22, 0.5, col, icon)
-        else:
+        elif s.get("numbered"):
             c.oval(x + 0.22, y + 0.22, 0.5, fill=col, text=str(k + 1), text_size=16)
+        else:   # executive default: a short accent bar, no icon or number
+            bar = True
+            c.rect(x + 0.25, y + 0.26, 0.34, 0.05, col)
         title = card.get("title", "")
-        if compact and not card.get("value"):
+        if bar:
+            tw = w - (1.95 if card.get("tag") else 0.5)
+            c.text(x + 0.25, y + 0.44, tw, 0.42, title, size=fit_size(title, tw, 0.42, 16, 11, bold=True), bold=True)
+            ty = y + 0.94
+        elif compact and not card.get("value"):
             c.text(x + 0.9, y + 0.22, w - (2.4 if card.get("tag") else 1.1), 0.5, title,
                    size=fit_size(title, w - (2.4 if card.get("tag") else 1.1), 0.5, 15, 11, bold=True), bold=True, valign="middle")
             ty = y + 0.9
@@ -345,10 +359,329 @@ def s_team(deck, s, i):
             c.text(x + 0.25, y + 1.12, w - 0.5, h - 1.25, p["text"], fit=(14, 9), color=c.t.muted)
 
 
+# ---------------------------------------------------------------- executive solution slides
+def _runs_line(label, title, color, size, label_size=8):
+    """Runs for '<LABEL>  title' on one line: a spaced accent label followed by regular text."""
+    out = []
+    if label:
+        out.append({"text": label.upper() + " ", "size": label_size, "bold": True, "spacing": 1.5, "color": color})
+    out.append({"text": title, "size": size})
+    return out
+
+
+def bands(c, items, y, h=0.62, x0=LEFT, total=WIDTH, i=0):
+    """Full-width foundation bands under a diagram: [{"label", "title", "text", "color", "dashed"}]."""
+    if not items:
+        return
+    weights = [float(b.get("width", 1)) for b in items]
+    gap = 0.18
+    avail = total - gap * (len(items) - 1)
+    x = x0
+    for k, b in enumerate(items):
+        w = avail * weights[k] / sum(weights)
+        col = color_of(b, k)
+        if b.get("dashed"):
+            c.outline(x, y, w, h, col, radius=0.12)
+        else:
+            c.card(x, y, w, h, fill=NAVY if k == 0 and c.t is DARK and not b.get("plain") else c.t.card_alt,
+                   border=NAVY if k == 0 and c.t is DARK and not b.get("plain") else c.t.line)
+        tw = w - 0.4
+        label, title, text = b.get("label", ""), b.get("title", ""), b.get("text", "")
+        first = (label.upper() + " " if label else "") + title
+        size = one_line_size(first, tw, 11, 8.5)
+        if size <= 8.5 and title:
+            warn(i, f"band '{label}' text is too long for one line; shorten it", fatal=False)
+        runs = _runs_line(label, title, c.t.accent(col), size)
+        if text:
+            runs[-1]["br"] = True
+            runs.append({"text": text, "size": max(8.0, min(9.5, one_line_size(text, tw, 9.5, 8))), "color": c.t.muted})
+        c.text(x + 0.2, y + 0.06, tw, h - 0.12, runs, valign="middle")
+        x += w + gap
+
+
+PADY, TGAP, IGAP = 0.08, 0.04, 0.05      # architecture item padding, title-to-text gap, gap between nested items
+
+
+def _item_height(it, w, ts, xs):
+    """Height of one architecture item (pill, or a group with nested items) at title size ts and text size xs."""
+    tw = w - (0.42 if it.get("accent") is not False and not it.get("items") else 0.26)
+    h = 2 * PADY + text_height(it.get("title", ""), tw, ts, bold=True)
+    if it.get("text"):
+        h += TGAP + text_height(it["text"], tw, xs)
+    subs = it.get("items") or []
+    if subs:
+        h += 0.06 + sum(_item_height(sub, w - 0.2, max(8.0, ts - 0.5), max(8.0, xs - 0.5)) for sub in subs) + IGAP * (len(subs) - 1)
+    return max(0.34, h)
+
+
+def _draw_item(c, it, x, y, w, h, ts, xs, col, fill):
+    if it.get("dashed"):
+        c.card(x, y, w, h, fill=NAVY if c.t is DARK else c.t.card, border=c.t.muted, dash=True, radius=0.1)
+    else:
+        c.card(x, y, w, h, fill=fill, border=fill, radius=0.1)
+    subs = it.get("items") or []
+    dot = it.get("accent") is not False and not subs
+    tx = x + (0.3 if dot else 0.14)
+    tw = w - (tx - x) - 0.12
+    th = text_height(it.get("title", ""), tw, ts, bold=True)
+    bh = text_height(it["text"], tw, xs) if it.get("text") else 0
+    content_h = th + (TGAP + bh if bh else 0)
+    ty = y + PADY if subs else y + (h - content_h) / 2
+    if dot:
+        c.oval(x + 0.12, ty + th / 2 - 0.045, 0.09, fill=color_of(it, 0) if it.get("color") else col)
+    c.text(tx, ty, tw, th + 0.01, it.get("title", ""), size=ts, bold=True)
+    yy = ty + th
+    if bh:
+        c.text(tx, yy + TGAP, tw, bh + 0.01, it["text"], size=xs, color=c.t.muted)
+        yy += TGAP + bh
+    if subs:
+        yy += 0.06
+        fill_inner = c.t.card if fill != c.t.card else c.t.card_alt
+        for sub in subs:
+            sts, sxs = max(8.0, ts - 0.5), max(8.0, xs - 0.5)
+            sh = _item_height(sub, w - 0.2, sts, sxs)
+            _draw_item(c, sub, x + 0.1, yy, w - 0.2, sh, sts, sxs, col, fill_inner)
+            yy += sh + IGAP
+
+
+def s_architecture(deck, s, i):
+    """Layered solution view: columns left to right joined by arrows, an optional revision loop and
+    foundation bands. Use it once per deck for the solution or architecture view."""
+    c = content(deck, s, i)
+    cols = s.get("columns", [])
+    if not 2 <= len(cols) <= 5:
+        warn(i, "architecture needs 2 to 5 columns" + ("; extra columns were dropped" if len(cols) > 5 else ""),
+             fatal=len(cols) > 5 or len(cols) < 2)
+        cols = cols[:5]
+        if len(cols) < 2:
+            return
+    band_items = s.get("bands", [])[:3]
+    bottom = BOTTOM
+    if band_items:
+        bands(c, band_items, bottom - 0.56, h=0.56, i=i)
+        bottom -= 0.56 + 0.14
+    loop = s.get("loop")
+    if loop:
+        bottom -= 0.38
+    gap = 0.36
+    weights = [float(col.get("width", 1)) for col in cols]
+    avail = WIDTH - gap * (len(cols) - 1)
+    widths = [avail * wt / sum(weights) for wt in weights]
+    xs, x = [], LEFT
+    for w in widths:
+        xs.append(x); x += w + gap
+    has_sub = any(col.get("sub") for col in cols)
+    box_top = c.top + (0.54 if has_sub else 0.3)
+    box_h = bottom - box_top
+    pad = 0.12
+    # pick the largest text that fits every column
+    ts = 10.5
+    while True:
+        xs_ = max(8.0, ts - 2)
+        need = []
+        for col, w in zip(cols, widths):
+            items = col.get("items", [])
+            need.append(sum(_item_height(it, w - 2 * pad, ts, xs_) for it in items) + 0.06 * max(0, len(items) - 1))
+        if max(need or [0]) <= box_h - 2 * pad or ts <= 8:
+            break
+        ts -= 0.5
+    if max(need or [0]) > box_h - 2 * pad:
+        warn(i, "an architecture column has too many items or too much text to fit: shorten item text or move items", fatal=True)
+    for k, (col, x, w) in enumerate(zip(cols, xs, widths)):
+        colr = on_theme(c, color_of(col, k))
+        lw = w + (gap - 0.1 if k < len(cols) - 1 else 0)
+        c.text(x, c.top - 0.04, lw, 0.22, [{"text": f"{k + 1:02d} " + col.get("label", "").upper(), "spacing": 2}],
+               size=one_line_size(f"{k + 1:02d} " + col.get("label", "").upper(), lw - 0.3, 9, 8, bold=True), bold=True,
+               color=c.t.accent(colr))
+        if col.get("sub"):
+            c.text(x, c.top + 0.22, lw, 0.26, col["sub"], size=one_line_size(col["sub"], lw, 11, 8.5), color=c.t.muted)
+        c.card(x, box_top, w, box_h, border=colr, radius=0.08)
+        items = col.get("items", [])
+        heights = [_item_height(it, w - 2 * pad, ts, xs_) for it in items]
+        spare = box_h - 2 * pad - sum(heights)
+        g = min(0.16, max(0.06, spare / max(1, len(items) - 1))) if len(items) > 1 else 0
+        yy = box_top + pad
+        for it, h in zip(items, heights):
+            _draw_item(c, it, x + pad, yy, w - 2 * pad, h, ts, xs_, colr, c.t.card_alt)
+            yy += h + g
+        if k < len(cols) - 1:
+            my = box_top + box_h / 2
+            c.arrow(x + w + 0.05, my, x + w + gap - 0.05, my, color=c.t.ink)
+    if loop:
+        frm = loop.get("from", len(cols)) - 1 if isinstance(loop, dict) else len(cols) - 1
+        to = loop.get("to", 2) - 1 if isinstance(loop, dict) else 1
+        text = loop.get("text", "") if isinstance(loop, dict) else str(loop)
+        lc = color_of(loop, 2) if isinstance(loop, dict) else color_of({}, 2)
+        fx, tx_ = xs[frm] + widths[frm] / 2, xs[to] + widths[to] / 2
+        ly = bottom + 0.12
+        c.line(fx, bottom, fx, ly, color=lc, width=1)
+        c.line(fx, ly, tx_, ly, color=lc, width=1)
+        c.arrow(tx_, ly, tx_, bottom + 0.02, color=lc, width=1)
+        lw = abs(fx - tx_) - 0.3
+        c.text(min(fx, tx_) + 0.15, ly + 0.05, lw, 0.2, text, size=max(8.0, one_line_size(text, lw, 9, 8)),
+               color=c.t.accent(lc), align="center")
+
+
+def s_flow(deck, s, i):
+    """End-to-end process as numbered step cards (2 to 10, two rows when more than 5), owner colours,
+    an optional 'accountable from here' marker and bands for parallel tracks or ways of working."""
+    c = content(deck, s, i)
+    steps = s.get("steps", [])
+    if not 2 <= len(steps) <= 10:
+        warn(i, "flow needs 2 to 10 steps" + ("; extra steps were dropped" if len(steps) > 10 else ""), fatal=len(steps) > 10)
+        steps = steps[:10]
+    owners = s.get("owners", {})
+    keys = list(owners)
+
+    def ocol(st, k):
+        o = owners.get(st.get("owner"))
+        if o:
+            return on_theme(c, color_of(o, keys.index(st["owner"])))
+        return on_theme(c, color_of(st, k))
+    band_items = s.get("bands", [])[:3]
+    bottom = BOTTOM
+    legend = bool(owners)
+    bx0 = LEFT
+    n = len(steps)
+    per_row = n if n <= 5 else math.ceil(n / 2)
+    rows = math.ceil(n / per_row)
+    gap = 0.3
+    w, xs = columns(per_row, gap=gap)
+    if band_items or legend:
+        bh = 0.42
+        need = max(len(band_items) * (bh + 0.1), (len(owners) * 0.22 + 0.05) if legend else 0)
+        top_b = bottom - need
+        if legend:
+            for k, key in enumerate(keys):
+                o = owners[key]
+                yy = top_b + 0.04 + k * 0.22
+                c.oval(LEFT + 0.02, yy + 0.04, 0.11, fill=color_of(o, k))
+                c.text(LEFT + 0.22, yy, xs[1] - LEFT - 0.35 if per_row > 1 else 2.0, 0.2, o.get("label", key), size=9, color=c.t.muted)
+            bx0 = xs[1] if per_row > 1 else LEFT + 2.3
+        for k, b in enumerate(band_items):
+            bands(c, [dict(b, plain=True)], top_b + k * (bh + 0.1), h=bh, x0=bx0, total=RIGHT - bx0, i=i)
+        bottom = top_b - 0.22
+    top = c.top
+    mk = s.get("marker")
+    if mk:
+        si = max(1, min(n, int(mk.get("step", 1)))) - 1
+        mx = xs[si % per_row]
+        label = mk.get("text", "").upper()
+        lw = min(RIGHT - mx - 0.4, ig_metrics_width(label, 8.5) + 0.1)
+        c.text(mx, top, lw, 0.2, [{"text": label, "spacing": 1.5}], size=8.5, bold=True, color=c.t.accent(color_of(mk, 0)))
+        c.arrow(mx + lw + 0.1, top + 0.1, min(RIGHT, mx + lw + 0.6), top + 0.1, color=c.t.accent(color_of(mk, 0)), width=1)
+        top += 0.32
+    rgap = 0.38
+    h = min(1.9, (bottom - top - rgap * (rows - 1)) / rows)
+    t_size = min(one_line_size(st.get("title", ""), w - 0.36, 13, 9.5, bold=True) for st in steps)
+    d_size = min([fit_size(st["text"], w - 0.36, h - 1.04, 10.5, 8) for st in steps if st.get("text")] or [10.5])
+    for k, st in enumerate(steps):
+        r, cidx = divmod(k, per_row)
+        x, y = xs[cidx], top + r * (h + rgap)
+        col = ocol(st, k)
+        c.card(x, y, w, h, border=col if st.get("highlight") else None)
+        c.text(x + 0.18, y + 0.1, 0.8, 0.46, f"{k + 1:02d}", size=22, light=True, color=c.t.accent(col), valign="middle")
+        c.oval(x + w - 0.3, y + 0.24, 0.13, fill=col)
+        title = st.get("title", "")
+        c.text(x + 0.18, y + 0.6, w - 0.36, 0.3, title, size=t_size, bold=True)
+        if st.get("text"):
+            c.text(x + 0.18, y + 0.94, w - 0.36, h - 1.04, st["text"], size=d_size, color=c.t.muted)
+        if cidx < per_row - 1 and k < n - 1:
+            c.arrow(x + w + 0.04, y + h / 2, x + w + gap - 0.04, y + h / 2)
+    if rows > 1:
+        last = xs[per_row - 1] + w / 2
+        y1 = top + h
+        mid = y1 + rgap / 2
+        c.line(last, y1, last, mid, color=c.t.ink, width=1)
+        c.line(last, mid, xs[0] + w / 2, mid, color=c.t.ink, width=1)
+        c.arrow(xs[0] + w / 2, mid, xs[0] + w / 2, y1 + rgap - 0.02)
+
+
+def ig_metrics_width(text, size, bold=True):
+    from ig_metrics import measure
+    return measure([{"runs": [(text, size, "bold" if bold else "regular", 1.5)], "indent": 0, "after": 0}], 20)["width"]
+
+
+def s_roles(deck, s, i):
+    """Team structure: role cards (2 to 5) with a big count, a short line and responsibilities, and an
+    optional headcount ramp drawn on the right."""
+    c = content(deck, s, i)
+    roles = s.get("roles", [])
+    if not 2 <= len(roles) <= 5:
+        warn(i, "roles needs 2 to 5 role cards" + ("; extra roles were dropped" if len(roles) > 5 else ""), fatal=len(roles) > 5)
+        roles = roles[:5]
+    ramp = s.get("ramp")
+    bottom = note_band(c, s["note"]) if s.get("note") else BOTTOM
+    right = RIGHT - (3.55 if ramp else 0)
+    w, xs = columns(len(roles), gap=0.16, total=right - LEFT)
+    h = bottom - c.top
+    bsize = min([bullets_fit(r["points"], w - 0.36, h - 2.1, (10.5, 8), 4) for r in roles if r.get("points")] or [10.5])
+    tsize = min(fit_size(r.get("title", ""), w - 0.36, 0.5, 13, 9.5, bold=True) for r in roles)
+    for k, (x, r) in enumerate(zip(xs, roles)):
+        col = on_theme(c, color_of(r, k))
+        c.card(x, c.top, w, h, radius=0.06)
+        c.rect(x + 0.06, c.top + 0.02, w - 0.12, 0.06, col)
+        cnt = str(r.get("count", ""))
+        c.text(x + 0.18, c.top + 0.2, w - 0.36, 0.7, cnt, size=fit_size(cnt, w - 0.36, 0.7, 40, 20), light=True, color=c.t.accent(col))
+        title = r.get("title", "")
+        c.text(x + 0.18, c.top + 0.95, w - 0.36, 0.52, title, size=tsize, bold=True)
+        if r.get("sub"):
+            c.text(x + 0.18, c.top + 1.5, w - 0.36, 0.26, r["sub"], size=one_line_size(r["sub"], w - 0.36, 9.5, 8), color=c.t.muted)
+        c.line(x + 0.18, c.top + 1.85, x + w - 0.18, c.top + 1.85, color=c.t.line, dash=True)
+        if r.get("points"):
+            c.bullets(x + 0.18, c.top + 1.98, w - 0.36, h - 2.1, r["points"], size=bsize, gap=4)
+    if ramp:
+        x0 = right + 0.55
+        cw = RIGHT - x0
+        c.text(right + 0.25, c.top, RIGHT - right - 0.25, 0.22, [{"text": ramp.get("label", "Headcount ramp").upper(), "spacing": 2}],
+               size=8.5, bold=True)
+        cats, vals = ramp.get("categories", []), ramp.get("values", [])
+        opt = ramp.get("optional") or {}
+        top_v = max([v + (opt.get("add", 0) if k >= opt.get("from", 99) - 1 else 0) for k, v in enumerate(vals)] + [1])
+        ymax = top_v + 0.5
+        chart_top, chart_h = c.top + 0.45, (bottom - c.top) - 2.35
+        unit = chart_h / ymax
+        base = chart_top + chart_h
+        for g in range(1, int(top_v) + 1):
+            gy = base - g * unit
+            c.line(x0, gy, RIGHT, gy, color=c.t.grid, width=0.5)
+            c.text(x0 - 0.3, gy - 0.09, 0.22, 0.18, str(g), size=8, color=c.t.dim, align="right")
+        bw = cw / max(1, len(vals))
+        hl = int(ramp.get("highlight", 0))
+        for k, v in enumerate(vals):
+            bx = x0 + k * bw + 0.03
+            c.rect(bx, base - v * unit, bw - 0.06, v * unit, YELLOW_ if k < hl else c.t.ink)
+            if opt and k >= opt.get("from", 99) - 1:
+                c.outline(bx, base - (v + opt.get("add", 1)) * unit, bw - 0.06, opt.get("add", 1) * unit - 0.02, MAGENTA_)
+            if k < len(cats):
+                c.text(bx - 0.03, base + 0.06, bw, 0.18, str(cats[k]), size=8, color=c.t.muted, align="center")
+        c.line(x0, base, RIGHT, base, color=c.t.ink, width=0.75)
+        ly = base + 0.38
+        leg = []
+        if hl:
+            leg.append(("fill", YELLOW_, ramp.get("highlight_label", "Ramp")))
+        leg.append(("fill", c.t.ink, ramp.get("full_label", "Full team")))
+        if opt:
+            leg.append(("dash", MAGENTA_, opt.get("label", "Optional")))
+        for k, (kind, colr, lab) in enumerate(leg):
+            yy = ly + k * 0.24
+            if kind == "fill":
+                c.rect(x0, yy + 0.03, 0.16, 0.12, colr)
+            else:
+                c.outline(x0, yy + 0.03, 0.16, 0.12, colr)
+            c.text(x0 + 0.26, yy, cw - 0.26, 0.2, lab, size=9, color=c.t.muted)
+        if ramp.get("note"):
+            ny = ly + len(leg) * 0.24 + 0.08
+            c.text(right + 0.25, ny, RIGHT - right - 0.25, bottom - ny, ramp["note"], fit=(9, 8), color=c.t.muted)
+
+
+YELLOW_, MAGENTA_ = ACCENTS[1], ACCENTS[2]
+
+
 TYPES = {"title": s_title, "agenda": s_agenda, "section": s_section, "statement": s_statement, "quote": s_statement,
          "closing": s_closing, "bullets": s_bullets, "cards": s_cards, "stats": s_stats, "process": s_process,
          "timeline": s_timeline, "table": s_table, "chart": s_chart, "comparison": s_comparison, "image": s_image,
-         "team": s_team}
+         "team": s_team, "architecture": s_architecture, "flow": s_flow, "roles": s_roles}
 
 
 def build(spec, out, base=Path("."), theme=None):

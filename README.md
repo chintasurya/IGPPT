@@ -4,6 +4,8 @@ Lets an AI assistant build any PowerPoint deck in Insight Global branding: statu
 
 The assistant writes a short JSON list of slides; the skill turns it into a finished, editable `.pptx` on the IG template (dark or light), with layout and font sizes handled automatically, and validates the deck before saving it: IG template, fonts and colours, no overflowing or overlapping text, spacing, no em dashes, spelling.
 
+For client executives it builds the solution views (one architecture, one end-to-end flow, one team and ramp slide) without decorative icons, refuses decks that repeat a view, and writes a talk track: a statement per slide that the presenter can read aloud.
+
 It follows the open Agent Skills format (a folder with `SKILL.md`), so the same folder works in GitHub Copilot (VS Code agent mode, Copilot CLI, Copilot cloud agent) and Claude Code.
 
 ## Package contents
@@ -30,6 +32,7 @@ It follows the open Agent Skills format (a folder with `SKILL.md`), so the same 
 | `igppt/scripts/deck_text.py` | Reads an existing deck's text |
 | `igppt/assets/ig-template.pptx` | The IG template (layouts only) |
 | `igppt/examples/sample-deck.json` | A 13-slide example using every main slide type |
+| `igppt/examples/solution-views.json` | Executive solution views: `architecture`, `flow` and `roles` slides with a talk track |
 | `copilot/agents/igppt.agent.md` | "IGPPT" custom agent for Copilot |
 | `chatgpt/GPT-instructions.md` | Set-up and instructions for a ChatGPT custom GPT |
 | `chatgpt/igppt-skill.zip` | The skill packed for upload to a custom GPT |

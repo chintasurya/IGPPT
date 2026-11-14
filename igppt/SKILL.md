@@ -104,6 +104,8 @@ Paths are relative to this skill's folder. Read `references/spec-format.md` for 
 | Position | anything off the slide, past the side margins or into the footer; shapes partly overlapping |
 | Words | em dash, en dash or `--`; a repeated word ("the the"); leftover placeholder text (lorem ipsum, TODO); a likely spelling mistake |
 | Content | the builder had to drop items (too many agenda items, cards, stats, steps, milestones or people) or an image is missing |
+| Views | two `architecture` slides, or a `flow`/`process` that repeats another view's parts |
+| Talk track | `"talk_track": true` and a content slide whose `notes` are missing or under 120 characters |
 
 Warnings (the deck is still saved, but read them): unknown words such as names, `[placeholders]`, a title that had to shrink, text close to a card edge, crowded text, duplicate titles.
 
@@ -126,12 +128,21 @@ Warnings (the deck is still saved, but read them): unknown words such as names, 
 1. **Understand the request.** Pull out: purpose, audience, decision or action wanted, length, deadline, and any data, notes or files supplied. Requests from chat or email are often short; fill gaps with sensible defaults rather than asking, and list what you assumed.
 2. **Pick a recipe** from `references/deck-recipes.md` (status update or quarterly review, proposal, kickoff, QBR, training, demo, pitch, all-hands, one-pager). Default length: 6 to 10 slides.
 3. **Write the storyline**: one message per slide, written as the slide title (a takeaway such as "Ticket Volume Is Falling", not a topic such as "Tickets"). Titles of 45 characters or fewer.
-4. **Write the spec.** Choose the slide type that shows each message best (numbers → `stats`, steps → `process`, dates → `timeline`, options → `comparison` or `cards`, data series → `chart`, detail → `table`). Vary types; avoid more than two `bullets` slides in a row. Put sources and assumptions in a `note`. Put talking points in `notes`.
+4. **Write the spec.** Choose the slide type that shows each message best (numbers → `stats`, steps → `process` or `flow`, solution or architecture → `architecture`, team → `roles`, dates → `timeline`, options → `comparison` or `cards`, data series → `chart`, detail → `table`). Vary types; avoid more than two `bullets` slides in a row. Put sources and assumptions in a `note`. Put talking points in `notes`.
 5. **Build and validate** with `python scripts/make_deck.py deck.json <name>.pptx`. On `FAIL`, fix the spec as the table above says and run it again, until it prints `SAVED`.
 6. **Review.** Read the warnings and fix what you can. Add `--preview previews/` when LibreOffice is available and look at every image. Then apply the content rules below.
 7. **Deliver** the `.pptx` with a short reply: what the deck covers, the slide list, and any assumptions, `[placeholders]` or unknown names the requester must confirm.
 
 When you are editing an existing deck the requester supplied, read it first with `python scripts/deck_text.py file.pptx`, keep its order and wording unless asked, and show previews before replacing anything.
+
+## Executive decks (proposals, solution designs, client reviews)
+
+These decks are presented to the client's executives. In addition to the content rules below:
+
+1. **Research before you propose.** Read every document supplied, end to end. List what the client actually asked for, in their words, and what is out of scope. Check names, numbers and claims against the documents (and against sources when you have web access). Do not design a solution until the ask is clear; list open questions instead of guessing.
+2. **One view per angle, never repeated.** Use `architecture` once for the system view, `flow` once for the sequence, `roles` once for the team, `table` for ownership and service levels. `make_deck.py` fails a deck that repeats a view.
+3. **No decoration.** Leave `icon` out unless an icon carries meaning the words do not; the default cards and steps are icon-free. Use the dark theme with `"background": "black"` or the template gradients.
+4. **A talk track for every slide.** Set `"talk_track": true`. Each content slide's `notes` is the statement the presenter reads aloud: what we propose, why it matters to this client, and the evidence (a quote from their documents, a number or a source). When you review or correct a proposal, say for every change what was missing and why the change is stronger. `make_deck.py` writes these into `<Name> - talk track.md`; deliver it with the deck.
 
 ## Content rules
 

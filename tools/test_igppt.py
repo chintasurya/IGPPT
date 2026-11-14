@@ -293,6 +293,51 @@ def _():
     expect(code == 1 and "dropped" in out, "agenda over 7 items must fail", out)
 
 
+@test("executive views (architecture, flow, roles) pass in dark and light, with a talk track file")
+def _():
+    ex = SAMPLE.with_name("solution-views.json")
+    for theme in ("dark", "light"):
+        out_pptx = TMP / f"views-{theme}.pptx"
+        code, out = run(SCRIPTS / "make_deck.py", ex, out_pptx, "--no-fix", "--theme", theme)
+        expect(code == 0 and "SAVED" in out, f"solution views should pass ({theme})", out)
+        talk = TMP / f"views-{theme} - talk track.md"
+        expect(talk.exists() and "Solution Architecture" in talk.read_text(encoding="utf-8"), "talk track file should be written", out)
+
+
+@test("cards and steps without icons stay icon-free")
+def _():
+    from pptx import Presentation
+    from pptx.enum.shapes import MSO_SHAPE_TYPE
+    spec = deck({"type": "cards", "title": "Three Plain Cards", "cards": [{"title": "One", "text": "First."},
+                 {"title": "Two", "text": "Second."}, {"title": "Three", "text": "Third."}]},
+                {"type": "process", "title": "Three Plain Steps", "steps": [{"title": "Plan"}, {"title": "Build"}, {"title": "Run"}]})
+    code, out, _ = make(spec, "noicons")
+    expect(code == 0, "plain cards and steps should pass", out)
+    prs = Presentation(str(TMP / "noicons.pptx"))
+    pics = [sh for s in list(prs.slides)[1:3] for sh in s.shapes if sh.shape_type == MSO_SHAPE_TYPE.PICTURE]
+    expect(not pics, "no icon pictures should be drawn when none are asked for", out)
+
+
+@test("a repeated solution view fails")
+def _():
+    arch = {"type": "architecture", "title": "Solution Architecture", "columns": [
+        {"label": "Inputs", "items": [{"title": "Brief"}, {"title": "Design"}]},
+        {"label": "Build", "items": [{"title": "Agent build"}, {"title": "Quality check"}]}]}
+    flow = {"type": "process", "title": "How Work Moves", "steps": [{"title": "Brief"}, {"title": "Design"}, {"title": "Agent build"}]}
+    code, out, _ = make(deck(arch, flow), "repeat")
+    expect(code == 1 and "repeats the view on slide 2" in out, "a flow that repeats the architecture must fail", out)
+    code, out, _ = make(deck(arch, dict(arch, title="Solution Architecture Again")), "twoarch")
+    expect(code == 1 and "second architecture view" in out, "two architecture slides must fail", out)
+
+
+@test("talk_track decks need a statement in every content slide's notes")
+def _():
+    spec = deck({"type": "bullets", "title": "Where We Are", "bullets": ["On track"], "notes": "Short."})
+    spec["talk_track"] = True
+    code, out, _ = make(spec, "notalk")
+    expect(code == 1 and "talk track missing" in out and "slides[1].notes" in out, "missing talk track must fail", out)
+
+
 @test("spec errors are reported before building")
 def _():
     code, out, _ = make({"slides": [{"type": "slideshow", "title": "x"}]}, "badtype")

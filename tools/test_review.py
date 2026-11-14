@@ -107,9 +107,11 @@ GOOD = {
     "evaluation_criteria": [{"criterion": "Price", "weight": "30%", "source": q(RFP, "Price will account for 30% of the evaluation score")}],
     "gaps": [
         {"title": "24x7 cover is understaffed", "detail": "Coverage maths needs about 10 FTE; the deck offers 6",
-         "severity": "high", "requirement_ids": ["R1"], "fix": "Add a shift roster and 4 analysts"},
+         "severity": "high", "requirement_ids": ["R1"], "fix": "Add a shift roster and 4 analysts",
+         "say": "The RFP requires 24x7 monitoring, and two analysts on shift around the clock needs about ten people once leave and training are counted. Six cannot hold that cover."},
         {"title": "No monthly CISO report", "detail": "A mandatory deliverable is not mentioned", "severity": "high",
-         "requirement_ids": ["R3"], "fix": "Add a reporting slide with a sample monthly report"}],
+         "requirement_ids": ["R3"], "fix": "Add a reporting slide with a sample monthly report",
+         "say": "The RFP makes a monthly service report to the CISO mandatory, and our deck never mentions it. A sample report closes a disqualification risk."}],
     "research": {"performed": False, "findings": [], "not_found": ["ShieldForge company size and recent news (no web access)"]},
     "competitors": [{"name": "In-house hiring", "type": "alternative approach", "offer": "ShieldForge keeps recruiting its own analysts",
                      "basis": "The RFP describes their current hiring and response times", "how_we_differ": "Analysts in 30 days, not months"}],
@@ -130,9 +132,12 @@ GOOD = {
                 "stated_grand_total": 667800, "stated_grand_total_source": q(XLS, "Total 667800"),
                 "budget": {"amount": 650000, "source": q(RFP, "budget for the six month engagement is not to exceed $650,000")},
                 "assessment": "Analyst line has a 2,200 USD arithmetic error and the total is over budget"},
-    "recommendations": [{"action": "Add a 24x7 shift roster and 4 analysts", "why": "R1 is mandatory", "priority": "high"},
-                        {"action": "Add the monthly CISO report", "why": "R3 is mandatory and missing", "priority": "high"},
-                        {"action": "Fix the analyst line total", "why": "6 x 95 x 1040 is 592,800, not 595,000", "priority": "medium"}],
+    "recommendations": [{"action": "Add a 24x7 shift roster and 4 analysts", "why": "R1 is mandatory", "priority": "high",
+                         "say": "We recommend a three-shift roster with ten analysts because 24x7 cover is mandatory and the coverage maths shows six is not enough."},
+                        {"action": "Add the monthly CISO report", "why": "R3 is mandatory and missing", "priority": "high",
+                         "say": "We add a sample monthly CISO report because the RFP makes it mandatory and evaluators will look for it first."},
+                        {"action": "Fix the analyst line total", "why": "6 x 95 x 1040 is 592,800, not 595,000", "priority": "medium",
+                         "say": "The analyst line is overstated by 2,200 dollars; six people at 95 an hour for 1,040 hours is 592,800. Arithmetic errors cost trust."}],
     "assumptions": ["Two analysts must be on shift at all times"],
     "open_questions": ["Does Security+ have to be held on day one?"]}
 
@@ -206,6 +211,15 @@ def _():
     r["summary"]["headline"] = "Good — but " + "x" * 100
     code, out = check(r, "rules")
     expect(code == 1 and "R3" in out and "not listed in any gap" in out and "em dash" in out and "characters" in out, "rules", out)
+
+
+@test("every gap and recommendation needs a talk-track statement")
+def _():
+    r = copy.deepcopy(GOOD)
+    del r["gaps"][0]["say"]
+    r["recommendations"][1]["say"] = "Add it."
+    code, out = check(r, "nosay")
+    expect(code == 1 and "gaps[0].say" in out and "recommendations[1].say" in out, "missing or thin statements must fail", out)
 
 
 @test("the review deck builds on the IG template and passes IGPPT validation")

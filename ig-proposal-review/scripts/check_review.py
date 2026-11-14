@@ -26,7 +26,9 @@ LIMITS = {"summary.headline": 90, "summary.points": 120, "requirements.text": 90
           "gaps.title": 40, "gaps.detail": 140, "gaps.fix": 140, "research.findings.claim": 160,
           "competitors.offer": 120, "competitors.how_we_differ": 120, "differentiators.title": 40,
           "differentiators.detail": 140, "staffing.rationale": 160, "pricing.assessment": 160,
-          "recommendations.action": 90, "recommendations.why": 140, "assumptions": 140, "open_questions": 140}
+          "recommendations.action": 90, "recommendations.why": 140, "assumptions": 140, "open_questions": 140,
+          "gaps.say": 450, "recommendations.say": 450}
+SAY_MIN = 80        # a talk-track statement the presenter can read aloud: what we propose, why, and the evidence
 ENUMS = {"summary.verdict": {"ready", "needs work", "not ready"}, "requirements.priority": {"must", "should", "could"},
          "requirements.coverage": {"met", "partial", "missing", "unclear"}, "gaps.severity": {"high", "medium", "low"},
          "research.findings.confidence": {"verified", "reported"},
@@ -161,6 +163,11 @@ class Checker:
         for q in r.get("requirements", []):
             if q.get("coverage") in ("partial", "missing") and q.get("id") not in in_gaps:
                 self.fail(f"requirement {q.get('id')}", f"is '{q.get('coverage')}' but not listed in any gap")
+        for key in ("gaps", "recommendations"):
+            for i, g in enumerate(r.get(key, [])):
+                if len(str(g.get("say", "")).strip()) < SAY_MIN:
+                    self.fail(f"{key}[{i}].say", f"needs a talk-track statement of at least {SAY_MIN} characters: what we "
+                                                 "propose, why it matters to this customer, and the quote or source behind it")
         for i, g in enumerate(r.get("gaps", [])):
             for rid in g.get("requirement_ids", []):
                 if rid not in req_ids:
@@ -314,6 +321,10 @@ def report_md(r):
             L += ["", pr["assessment"]]
     L += ["", "## Recommended changes", ""]
     L += [f"{k}. **{x['action']}** ({x.get('priority', '')}): {x.get('why', '')}" for k, x in enumerate(r.get("recommendations", []), 1)]
+    talk = [(g["title"], g.get("say", "")) for g in r.get("gaps", [])] + [(x["action"], x.get("say", "")) for x in r.get("recommendations", [])]
+    if any(sv for _, sv in talk):
+        L += ["", "## Talk track", "", "Statements to read aloud, one per gap and recommendation.", ""]
+        L += [f"- **{t}**: {sv}" for t, sv in talk if sv]
     for title, key in (("Assumptions", "assumptions"), ("Open questions", "open_questions")):
         if r.get(key):
             L += ["", f"## {title}", ""] + [f"- {x}" for x in r[key]]

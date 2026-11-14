@@ -1,0 +1,71 @@
+{
+  "theme": "dark",
+  "background": "black",
+  "talk_track": true,
+  "slides": [
+    {"type": "title", "title": "Content Operations Solution", "subtitle": "Solution, delivery model and team", "date": "Nov 2026"},
+
+    {"type": "architecture", "title": "Solution Architecture",
+     "eyebrow": "Solution",
+     "subtitle": "One accountable team from request to handoff, inside the client's own systems.",
+     "columns": [
+       {"label": "Inputs", "sub": "Client brands", "color": "cyan", "items": [
+         {"title": "Request brief"},
+         {"title": "Design system", "text": "Approved components and templates"},
+         {"title": "Ticket and plan", "text": "Readiness check at intake", "accent": false}]},
+       {"label": "Build", "sub": "IG pod", "color": "yellow", "width": 1.1, "items": [
+         {"title": "Delivery pod", "text": "Lead, two builders, QA"},
+         {"title": "Automated build", "text": "Assembles content from approved parts"},
+         {"title": "Review and QA", "text": "Two quality gates before approval"}]},
+       {"label": "Platform", "sub": "Client marketing platform", "color": "magenta", "width": 1.1, "items": [
+         {"title": "Customer data", "text": "Owned by the client data team", "dashed": true},
+         {"title": "Content library", "text": "The asset, built by the pod", "items": [
+           {"title": "Approved blocks"}, {"title": "Personalization"}]},
+         {"title": "Preview and test send"}]},
+       {"label": "Approval and release", "sub": "Client teams", "color": "white", "items": [
+         {"title": "Business approval", "accent": false},
+         {"title": "Compliance review", "accent": false},
+         {"title": "Release", "accent": false}]}],
+     "loop": {"text": "Review changes come back to the pod and are tested again", "from": 4, "to": 2},
+     "bands": [
+       {"label": "Client environment", "title": "Client access, tools and tickets", "text": "Full visibility into every request", "color": "cyan"},
+       {"label": "Govern", "title": "Monthly and quarterly reviews", "text": "Weekly KPIs", "color": "yellow"}],
+     "notes": "We show one architecture view because it answers the first executive question: who does what, in whose systems. Everything runs in the client's tools, so the client keeps full visibility and owns what the team learns."},
+
+    {"type": "flow", "title": "How Each Request Moves",
+     "eyebrow": "Delivery",
+     "subtitle": "Seven steps, two quality gates and one owner for every revision.",
+     "owners": {"client": {"label": "Client-led", "color": "magenta"}, "pod": {"label": "IG pod", "color": "cyan"}},
+     "marker": {"step": 2, "text": "IG accountable from here"},
+     "steps": [
+       {"title": "Request", "owner": "client", "text": "Brief submitted with inputs"},
+       {"title": "Plan", "owner": "pod", "text": "Ticket opened and scheduled"},
+       {"title": "Assemble", "owner": "pod", "text": "Asset built from approved parts"},
+       {"title": "Check", "owner": "pod", "text": "Peer review and regression test"},
+       {"title": "Approve", "owner": "client", "text": "Business and compliance sign-off"},
+       {"title": "Hand over", "owner": "pod", "text": "Released with test evidence"},
+       {"title": "Learn", "owner": "pod", "text": "Repeat issues become rules"}],
+     "bands": [{"label": "Way of working", "title": "Kanban with weekly replenishment", "color": "cyan"}],
+     "notes": "We use a continuous flow because requests arrive every day; a sprint would make urgent work wait. The two checks before approval are where errors are cheapest to fix."},
+
+    {"type": "roles", "title": "Pod Structure and Ramp",
+     "eyebrow": "Team",
+     "subtitle": "Four people at full strength, ramped in over the first quarter.",
+     "roles": [
+       {"count": "1", "title": "Delivery lead", "sub": "Hands-on", "points": ["Intake and planning", "Reporting", "Escalations"]},
+       {"count": "2", "title": "Builders", "sub": "Daily production", "points": ["Builds and revisions", "First-level checks"]},
+       {"count": "1", "title": "QA specialist", "sub": "Independent", "points": ["Regression testing", "Final sign-off"]}],
+     "ramp": {"label": "Headcount ramp", "categories": ["J", "F", "M", "A", "M", "J"], "values": [2, 3, 4, 4, 4, 4], "highlight": 3,
+              "highlight_label": "Q1 ramp", "full_label": "Full pod", "optional": {"from": 5, "add": 1, "label": "Optional builder"}},
+     "notes": "Three of the four roles build or test every day, and QA is independent of the builders, so every asset is checked by someone who did not make it."},
+
+    {"type": "cards", "title": "Why This Model Works",
+     "cards": [
+       {"title": "One owner", "text": "A single team owns every request until handoff."},
+       {"title": "Client systems", "text": "No vendor tools, full visibility."},
+       {"title": "Measured weekly", "text": "Build time, rework and volume."}],
+     "notes": "These three points are what the client told us matters: accountability, transparency and proof. Each one is visible in the architecture and the weekly report, not just claimed."},
+
+    {"type": "closing"}
+  ]
+}

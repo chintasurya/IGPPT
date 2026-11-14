@@ -113,11 +113,12 @@ def build_spec(r):
     # 4. gaps
     if gaps:
         cards = [{"title": g["title"], "text": g.get("detail", ""), "tag": g.get("severity", "").title(),
-                  "color": SEV_COLOR.get(g.get("severity"), "cyan"), "icon": "warning"} for g in gaps[:6]]
+                  "color": SEV_COLOR.get(g.get("severity"), "cyan")} for g in gaps[:6]]
         if len(cards) == 1:
-            cards.append({"title": "No other gaps found", "text": "Every other requirement is met or unclear.", "icon": "check-circle"})
+            cards.append({"title": "No other gaps found", "text": "Every other requirement is met or unclear."})
         add({"type": "cards", "eyebrow": "Gaps", "title": "Gaps to Close Before Submission", "cards": cards,
-             "notes": "\n".join(f"{g['title']}: fix: {g.get('fix', '')}" for g in gaps[:6])}, "gaps (title 40, detail 140 max)")
+             "notes": "\n\n".join(f"{g['title']}: {g.get('say') or 'fix: ' + g.get('fix', '')}" for g in gaps[:6])},
+            "gaps (title 40, detail 140 max)")
 
     # 5. competition
     comps = r.get("competitors", [])[:6]
@@ -133,9 +134,9 @@ def build_spec(r):
     diffs = sorted(r.get("differentiators", []), key=lambda d: d.get("strength") != "proven")[:6]
     if diffs:
         cards = [{"title": d["title"], "text": d.get("detail", ""), "tag": "Proven" if d.get("strength") == "proven" else "Unproven",
-                  "color": "green" if d.get("strength") == "proven" else "orange", "icon": "flag"} for d in diffs]
+                  "color": "green" if d.get("strength") == "proven" else "orange"} for d in diffs]
         if len(cards) == 1:
-            cards.append({"title": "Find more proof points", "text": "Only one differentiator has evidence so far.", "icon": "search"})
+            cards.append({"title": "Find more proof points", "text": "Only one differentiator has evidence so far."})
         add({"type": "cards", "eyebrow": "Differentiators", "title": "Where We Stand Out", "cards": cards},
             "differentiators (title 40, detail 140 max)")
 
@@ -177,7 +178,7 @@ def build_spec(r):
     add({"type": "bullets", "eyebrow": "Next steps", "title": "Recommended Changes", "bullets": [x["action"] for x in recs],
          "callout": {"value": str(sum(x.get("priority") == "high" for x in r.get("recommendations", []))), "label": "High priority",
                      "color": "magenta"},
-         "notes": "\n".join(f"{x['action']}: {x.get('why', '')}" for x in recs)}, "recommendations (action 90 max)")
+         "notes": "\n\n".join(f"{x['action']}: {x.get('say') or x.get('why', '')}" for x in recs)}, "recommendations (action 90 max)")
 
     # 10. questions and assumptions
     qs, asm = r.get("open_questions", [])[:4], r.get("assumptions", [])[:4]
