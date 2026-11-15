@@ -135,6 +135,15 @@ Team structure: 2 to 5 role cards with a big count, a short line and responsibil
           "note": "One line on the scale trigger"}}
 ```
 
+### hub
+Benefits around a centre statement: 4, 6 or 8 hexagon badges on a dotted ring, each with a big value and a title, a line of text and an optional coloured detail line. Items fill the left side top to bottom, then the right side. Use it for "What the client gains" or value slides.
+```json
+{"type": "hub", "title": "What the Client Gains", "subtitle": "Illustrative targets, baselined at kickoff.",
+ "center": {"title": "Real impact", "text": "baselined at kickoff"},
+ "items": [{"value": "90%+", "title": "Automated builds", "text": "One line.", "detail": "Optional coloured line.", "color": "yellow"}]}
+```
+Keep `value` short (about 6 characters) and `text` to about two lines.
+
 ### Solution views are never repeated
 `architecture`, `flow` and `process` slides each show how the solution works from one angle. `make_deck.py` fails a deck with two `architecture` slides, or a `flow` or `process` slide whose parts mostly repeat another view (3 or more of the same names, half or more of the smaller view). Show the system once (architecture), the sequence once (flow), and the people once (roles).
 
@@ -143,6 +152,6 @@ Team structure: 2 to 5 role cards with a big count, a short line and responsibil
 
 ## Building and validating
 
-Run `python scripts/make_deck.py deck.json out.pptx`. It fixes dashes and double spaces in the spec, builds the deck, validates it, and saves `out.pptx` only on PASS. Each problem names the spec field to change, for example `slides[3].cards[1].text`. Limits that fail the build because content would be dropped: agenda 7 items, cards 6, stats 4, process steps 6, flow steps 10, architecture columns 5, roles 5, timeline milestones 7, team members 8. Unknown icons fall back to a number with a warning.
+Run `python scripts/make_deck.py deck.json out.pptx`. It fixes dashes and double spaces in the spec, builds the deck, validates it, and saves `out.pptx` only on PASS. Each problem names the spec field to change, for example `slides[3].cards[1].text`. Limits that fail the build because content would be dropped: agenda 7 items, cards 6, stats 4, process steps 6, flow steps 10, architecture columns 5, roles 5, hub items 8, timeline milestones 7, team members 8. Unknown icons fall back to a number with a warning.
 
 Text rules: no em dashes, en dashes or `--` (use a comma, colon or hyphen); no leftover placeholder text such as lorem ipsum or TODO. `[XX%]`-style placeholders are allowed but reported. Names the spell check does not know go in `igppt-words.txt` next to the spec.

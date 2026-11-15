@@ -29,7 +29,7 @@ import validate as V  # noqa: E402
 
 TEXT_SKIP = {"type", "color", "icon", "theme", "background", "image", "style", "number_format"}
 CONTENT = {"bullets", "cards", "stats", "process", "timeline", "table", "chart", "comparison", "image", "team",
-           "architecture", "flow", "roles"}
+           "architecture", "flow", "roles", "hub"}
 VIEW_TYPES = {"architecture", "flow", "process"}      # slides that show how the solution works; never show one twice
 TALK_MIN = 120                                         # characters of talk track a content slide needs
 REQUIRED = {"title": ["title"], "section": ["title"], "statement": ["text"], "quote": ["text"], "agenda": ["items"],
@@ -37,7 +37,7 @@ REQUIRED = {"title": ["title"], "section": ["title"], "statement": ["text"], "qu
             "process": ["title", "steps"], "timeline": ["title", "milestones"], "table": ["title", "rows"],
             "chart": ["title", "chart"], "comparison": ["title", "left", "right"], "image": ["title", "image"],
             "team": ["title", "members"], "closing": [], "architecture": ["title", "columns"],
-            "flow": ["title", "steps"], "roles": ["title", "roles"]}
+            "flow": ["title", "steps"], "roles": ["title", "roles"], "hub": ["title", "items"]}
 
 
 def fix_spec(node, path="", changes=None):

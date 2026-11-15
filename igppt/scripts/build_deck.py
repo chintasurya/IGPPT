@@ -709,10 +709,72 @@ def s_roles(deck, s, i):
 YELLOW_, MAGENTA_ = ACCENTS[1], ACCENTS[2]
 
 
+def s_hub(deck, s, i):
+    """Benefits around a hub: a centre statement inside a circle and 4, 6 or 8 badges on a dotted ring, each with a
+    big value in a hexagon and a title, a line of text and an optional coloured detail line beside it.
+    Items fill the left side top to bottom, then the right side."""
+    c = content(deck, s, i)
+    items = s.get("items", [])
+    if len(items) not in (4, 6, 8):
+        warn(i, "hub needs 4, 6 or 8 items" + ("; extra items were dropped" if len(items) > 8 else ""), fatal=True)
+        items = items[:8] if len(items) > 8 else items[:len(items) // 2 * 2]
+        if len(items) < 4:
+            return
+    per = len(items) // 2
+    cx = (LEFT + RIGHT) / 2
+    top, bottom = c.top + 0.2, BOTTOM - 0.25
+    cy = (top + bottom) / 2
+    hw, hh = (0.96, 0.83) if per == 4 else (1.06, 0.92)
+    rows = [1 - (2 * k + 1) / per for k in range(per)]          # evenly spaced rows, top to bottom
+    ry = min(2.3, (bottom - top - hh) / (2 * max(rows[0], 0.5)))
+    rx = 2.0 if per == 4 else min(1.8, ry)
+    pos = [(cx - rx * math.sqrt(max(0.0, 1 - v * v)), cy - ry * v) for v in rows]
+    pos += [(2 * cx - x, y) for x, y in pos]
+    r = rx
+    c.ring(cx, cy, rx, segments=140, width=1.25, ry=ry)
+    cd = min(2.0, min(rx, ry) * 1.1)
+    ctr = s.get("center", {})
+    c.oval(cx - cd / 2, cy - cd / 2, cd, fill="000000" if c.t is DARK else c.t.card_alt, line=ACCENTS[2], line_width=3)
+    runs = [{"text": ctr.get("title", ""), "size": one_line_size(ctr.get("title", ""), cd - 0.4, 22, 12, bold=True), "bold": True,
+             "br": bool(ctr.get("text"))}]
+    if ctr.get("text"):
+        runs.append({"text": ctr["text"], "size": 11, "color": c.t.accent(ACCENTS[0])})
+    c.text(cx - cd / 2 + 0.2, cy - 0.45, cd - 0.4, 0.9, runs, align="center", valign="middle")
+    def span(k, hx):
+        return (LEFT, hx - hw / 2 - 0.25) if k < per else (hx + hw / 2 + 0.25, RIGHT)
+    tsize = min(one_line_size(it.get("title", ""), span(k, hx)[1] - span(k, hx)[0], 16 if per < 4 else 15, 11, bold=True)
+                for k, (it, (hx, hy)) in enumerate(zip(items, pos)))
+    for k, (it, (hx, hy)) in enumerate(zip(items, pos)):
+        col = color_of(it, k)
+        c.hexagon(hx - hw / 2, hy - hh / 2, hw, hh, col)
+        v = str(it.get("value", ""))
+        c.text(hx - hw / 2 + 0.14, hy - 0.22, hw - 0.28, 0.44, v, size=one_line_size(v, hw - 0.28, 22, 10, bold=True), bold=True,
+               align="center", valign="middle")
+        left = k < per
+        x0, x1 = span(k, hx)
+        w = x1 - x0
+        body = it.get("text", "")
+        bsize = 11 if per == 4 else 11.5
+        dsize = 10 if per == 4 else 10.5
+        bh = text_height(body, w, bsize) if body else 0
+        det = it.get("detail", "")
+        dh = text_height(det, w, dsize) if det else 0
+        total = 0.32 + (0.06 + bh if body else 0) + (0.06 + dh if det else 0)
+        y = hy - total / 2
+        align = "right" if left else "left"
+        c.text(x0, y, w, 0.3, it.get("title", ""), size=tsize, bold=True, align=align)
+        y += 0.32
+        if body:
+            c.text(x0, y + 0.06, w, bh + 0.01, body, size=bsize, color=c.t.muted, align=align)
+            y += 0.06 + bh
+        if det:
+            c.text(x0, y + 0.06, w, dh + 0.01, det, size=dsize, italic=True, color=c.t.accent(col), align=align)
+
+
 TYPES = {"title": s_title, "agenda": s_agenda, "section": s_section, "statement": s_statement, "quote": s_statement,
          "closing": s_closing, "bullets": s_bullets, "cards": s_cards, "stats": s_stats, "process": s_process,
          "timeline": s_timeline, "table": s_table, "chart": s_chart, "comparison": s_comparison, "image": s_image,
-         "team": s_team, "architecture": s_architecture, "flow": s_flow, "roles": s_roles}
+         "team": s_team, "architecture": s_architecture, "flow": s_flow, "roles": s_roles, "hub": s_hub}
 
 
 def build(spec, out, base=Path("."), theme=None):

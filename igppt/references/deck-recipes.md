@@ -24,7 +24,7 @@ Lessons from IG proposals: lead with the client's problem, back every claim with
 8. table: who owns what across every party
 9. timeline: mobilization and transition
 10. table: service levels and KPIs (mark targets "proposed" until agreed)
-11. cards or stats: value to the client (each tied to a number from their data)
+11. hub, cards or stats: value to the client (each tied to a number from their data)
 12. bullets: risks and mitigations
 13. table: commercials (check the arithmetic: monthly x 12 = annual)
 14. timeline: next steps to signature and go-live

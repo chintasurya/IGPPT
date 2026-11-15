@@ -293,7 +293,7 @@ def _():
     expect(code == 1 and "dropped" in out, "agenda over 7 items must fail", out)
 
 
-@test("executive views (architecture, flow, roles) pass in dark and light, with a talk track file")
+@test("executive views (architecture, flow, roles, hub) pass in dark and light, with a talk track file")
 def _():
     ex = SAMPLE.with_name("solution-views.json")
     for theme in ("dark", "light"):
@@ -302,6 +302,13 @@ def _():
         expect(code == 0 and "SAVED" in out, f"solution views should pass ({theme})", out)
         talk = TMP / f"views-{theme} - talk track.md"
         expect(talk.exists() and "Solution Architecture" in talk.read_text(encoding="utf-8"), "talk track file should be written", out)
+    hub = deck({"type": "hub", "title": "Eight Benefits", "center": {"title": "Impact"},
+                "items": [{"value": str(k), "title": f"Benefit {k}", "text": "One short line of text.", "detail": "Detail."}
+                          for k in range(1, 9)]})
+    code, out, _ = make(hub, "hub8")
+    expect(code == 0 and "SAVED" in out, "an 8-item hub should pass", out)
+    code, out, _ = make(deck({"type": "hub", "title": "Five Benefits", "items": [{"value": "1", "title": "x"}] * 5}), "hub5")
+    expect(code == 1 and "hub needs 4, 6 or 8 items" in out, "an odd number of hub items must fail", out)
 
 
 @test("cards and steps without icons stay icon-free")

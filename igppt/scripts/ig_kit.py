@@ -321,6 +321,18 @@ class Canvas:
             sh.line.dash_style = MSO_LINE.DASH
         return sh
 
+    def hexagon(self, x, y, w, h, color, fill=None, width=3):
+        """Hexagon badge with a thick coloured border (fill defaults to the slide background)."""
+        return self._shape(MSO_SHAPE.HEXAGON, x, y, w, h, fill or (BLACK if self.t is DARK else self.t.card_alt), color, width)
+
+    def ring(self, cx, cy, r, color=None, segments=48, width=1, ry=None):
+        """Dotted circle (or ellipse, with ry) drawn as short line segments, e.g. to join badges around a hub."""
+        ry = ry or r
+        for k in range(0, segments, 2):
+            a1, a2 = 2 * math.pi * k / segments, 2 * math.pi * (k + 1) / segments
+            self.line(cx + r * math.cos(a1), cy + ry * math.sin(a1), cx + r * math.cos(a2), cy + ry * math.sin(a2),
+                      color=color or self.t.dim, width=width)
+
     def image(self, path, x, y, w=None, h=None):
         return self.shapes.add_picture(str(path), Inches(x), Inches(y), Inches(w) if w else None, Inches(h) if h else None)
 
