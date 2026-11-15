@@ -399,12 +399,19 @@ def bands(c, items, y, h=0.62, x0=LEFT, total=WIDTH, i=0):
         x += w + gap
 
 
-PADY, TGAP, IGAP = 0.08, 0.04, 0.05      # architecture item padding, title-to-text gap, gap between nested items
+PADY, TGAP, IGAP = 0.08, 0.05, 0.05      # architecture item padding, title-to-text gap, gap between nested items
+
+
+def _tag_w(tag):
+    """Width of a small role tag (for example 'TECH LEAD') shown at the top right of an item."""
+    return ig_metrics_width(str(tag).upper(), 8) + 0.06
 
 
 def _item_height(it, w, ts, xs):
     """Height of one architecture item (pill, or a group with nested items) at title size ts and text size xs."""
     tw = w - (0.42 if it.get("accent") is not False and not it.get("items") else 0.26)
+    if it.get("tag"):
+        tw -= _tag_w(it["tag"]) + 0.1
     h = 2 * PADY + text_height(it.get("title", ""), tw, ts, bold=True)
     if it.get("text"):
         h += TGAP + text_height(it["text"], tw, xs)
@@ -423,6 +430,10 @@ def _draw_item(c, it, x, y, w, h, ts, xs, col, fill):
     dot = it.get("accent") is not False and not subs
     tx = x + (0.3 if dot else 0.14)
     tw = w - (tx - x) - 0.12
+    full_tw = tw
+    if it.get("tag"):
+        tg = _tag_w(it["tag"])
+        tw -= tg + 0.1
     th = text_height(it.get("title", ""), tw, ts, bold=True)
     bh = text_height(it["text"], tw, xs) if it.get("text") else 0
     content_h = th + (TGAP + bh if bh else 0)
@@ -430,6 +441,9 @@ def _draw_item(c, it, x, y, w, h, ts, xs, col, fill):
     if dot:
         c.oval(x + 0.12, ty + th / 2 - 0.045, 0.09, fill=color_of(it, 0) if it.get("color") else col)
     c.text(tx, ty, tw, th + 0.01, it.get("title", ""), size=ts, bold=True)
+    if it.get("tag"):
+        c.text(tx + full_tw - tg, ty + 0.01, tg, 0.18, [{"text": it["tag"].upper(), "spacing": 1}], size=8, bold=True,
+               color=c.t.accent(color_of(it, 0) if it.get("color") else col), align="right")
     yy = ty + th
     if bh:
         c.text(tx, yy + TGAP, tw, bh + 0.01, it["text"], size=xs, color=c.t.muted)
@@ -474,14 +488,29 @@ def s_architecture(deck, s, i):
     box_top = c.top + (0.54 if has_sub else 0.3)
     box_h = bottom - box_top
     pad = 0.12
+    lane_gap = 0.12
+
+    def lanes_of(col, w):
+        """Items split into 1 or 2 lanes (an item's "lane" is 1 or 2; others fill lane 1 then lane 2)."""
+        items = col.get("items", [])
+        n = 2 if int(col.get("lanes", 1)) >= 2 else 1
+        lw = (w - 2 * pad - lane_gap * (n - 1)) / n
+        if n == 1:
+            return [items], lw
+        if any(it.get("lane") for it in items):
+            return [[it for it in items if int(it.get("lane", 1)) == k] for k in (1, 2)], lw
+        half = math.ceil(len(items) / 2)
+        return [items[:half], items[half:]], lw
+
     # pick the largest text that fits every column
     ts = 10.5
     while True:
         xs_ = max(8.0, ts - 2)
         need = []
         for col, w in zip(cols, widths):
-            items = col.get("items", [])
-            need.append(sum(_item_height(it, w - 2 * pad, ts, xs_) for it in items) + 0.06 * max(0, len(items) - 1))
+            lanes, lw = lanes_of(col, w)
+            for items in lanes:
+                need.append(sum(_item_height(it, lw, ts, xs_) for it in items) + 0.06 * max(0, len(items) - 1))
         if max(need or [0]) <= box_h - 2 * pad or ts <= 8:
             break
         ts -= 0.5
@@ -495,15 +524,17 @@ def s_architecture(deck, s, i):
                color=c.t.accent(colr))
         if col.get("sub"):
             c.text(x, c.top + 0.22, lw, 0.26, col["sub"], size=one_line_size(col["sub"], lw, 11, 8.5), color=c.t.muted)
-        c.card(x, box_top, w, box_h, border=colr, radius=0.08)
-        items = col.get("items", [])
-        heights = [_item_height(it, w - 2 * pad, ts, xs_) for it in items]
-        spare = box_h - 2 * pad - sum(heights)
-        g = min(0.16, max(0.06, spare / max(1, len(items) - 1))) if len(items) > 1 else 0
-        yy = box_top + pad
-        for it, h in zip(items, heights):
-            _draw_item(c, it, x + pad, yy, w - 2 * pad, h, ts, xs_, colr, c.t.card_alt)
-            yy += h + g
+        c.card(x, box_top, w, box_h, border=colr, radius=0.08, border_width=2.25 if col.get("highlight") else 1)
+        lanes, lw_ = lanes_of(col, w)
+        for li, items in enumerate(lanes):
+            heights = [_item_height(it, lw_, ts, xs_) for it in items]
+            spare = box_h - 2 * pad - sum(heights)
+            g = min(0.16, max(0.06, spare / max(1, len(items) - 1))) if len(items) > 1 else 0
+            yy = box_top + pad
+            lx = x + pad + li * (lw_ + lane_gap)
+            for it, h in zip(items, heights):
+                _draw_item(c, it, lx, yy, lw_, h, ts, xs_, colr, c.t.card_alt)
+                yy += h + g
         if k < len(cols) - 1:
             my = box_top + box_h / 2
             c.arrow(x + w + 0.05, my, x + w + gap - 0.05, my, color=c.t.ink)

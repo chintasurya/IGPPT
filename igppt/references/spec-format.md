@@ -112,7 +112,7 @@ The one solution or architecture view of a deck: columns left to right joined by
  "loop": {"text": "Review changes come back to the team", "from": 2, "to": 1},
  "bands": [{"label": "Client environment", "title": "Client tools", "text": "Full visibility", "color": "cyan"}]}
 ```
-2 to 5 columns (`width` is relative), about 3 to 5 items each. An item has `title`, optional `text`, `"accent": false` to drop its dot, `"dashed": true` for a dependency owned by someone else, and `items` for a group of nested items. `loop` numbers columns from 1. Up to 3 `bands` (the first is navy). Text sizes are picked to fit; the build fails if a column is too full.
+2 to 5 columns (`width` is relative), about 3 to 5 items each. An item has `title`, optional `text`, `tag` (a short role label shown top right, for example "Tech lead"), `"accent": false` to drop its dot, `"dashed": true` for a dependency owned by someone else, and `items` for a group of nested items. A column can take `"highlight": true` (thicker border, for the part we own) and `"lanes": 2` to lay its items out in two lanes; an item's `"lane"` (1 or 2) places it, otherwise items fill lane 1 then lane 2. For a three-part view (client inputs, our team, client delivery), give the middle column `"width": 1.9, "lanes": 2, "highlight": true` and number its items in order. `loop` numbers columns from 1. Up to 3 `bands` (the first is navy). Text sizes are picked to fit; the build fails if a column is too full.
 
 ### flow
 An end-to-end process as numbered step cards: up to 10 steps, two rows when there are more than 5, joined by arrows.
